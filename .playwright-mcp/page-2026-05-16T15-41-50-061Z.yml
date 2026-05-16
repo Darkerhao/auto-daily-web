@@ -1,0 +1,32 @@
+- generic [ref=e5]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - img [ref=e9]
+      - generic [ref=e12]:
+        - strong [ref=e13]: 甲子日报 AI
+        - generic [ref=e14]: Git Diff to Feishu
+    - heading "接入你的研发工作流" [level=1] [ref=e15]
+    - paragraph [ref=e16]: 邮箱登录为当前演示入口，GitHub / GitLab 登录已预留。
+    - generic [ref=e17]:
+      - generic [ref=e19]: GitHub OAuth Reserved
+      - generic [ref=e21]: GitLab OAuth Reserved
+  - generic [ref=e22]:
+    - heading "登录工作台" [level=2] [ref=e23]
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]: 邮箱
+          - generic [ref=e28]: "*"
+        - textbox "name@company.com" [ref=e33]: demo@jiazi.ai
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: 密码
+          - generic [ref=e38]: "*"
+        - textbox "请输入密码" [ref=e43]: "123456"
+      - button "邮箱登录" [ref=e45] [cursor=pointer]:
+        - generic [ref=e46]: 邮箱登录
+      - generic [ref=e47]:
+        - button "GitHub 登录（预留）" [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: GitHub 登录（预留）
+        - button "GitLab 登录（预留）" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: GitLab 登录（预留）
