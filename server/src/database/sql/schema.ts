@@ -77,8 +77,16 @@ CREATE TABLE IF NOT EXISTS feishu_settings (
   webhook_url TEXT NOT NULL,
   bot_secret TEXT NOT NULL,
   doc_url TEXT NOT NULL,
+  app_id TEXT NOT NULL DEFAULT '',
+  app_secret TEXT NOT NULL DEFAULT '',
   auto_send_time TEXT NOT NULL,
   enable_robot BOOLEAN NOT NULL,
   enable_doc_sync BOOLEAN NOT NULL
 );
+
+ALTER TABLE feishu_settings
+ADD COLUMN IF NOT EXISTS app_id TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE feishu_settings
+ADD COLUMN IF NOT EXISTS app_secret TEXT NOT NULL DEFAULT '';
 `

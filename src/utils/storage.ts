@@ -5,6 +5,7 @@ export const storageKeys = {
   sidebarCollapsed: 'jiazi-sidebar-collapsed',
   workspaceProfile: 'jiazi-workspace-profile',
   reportPreferences: 'jiazi-report-preferences',
+  reportStreamPanel: 'jiazi-report-stream-panel',
 } as const
 
 export function readStorage<T>(key: string, fallback: T): T {

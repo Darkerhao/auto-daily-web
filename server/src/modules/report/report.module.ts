@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { ok } from '../../common/types/api.js'
 import { createAppRepository } from '../../database/repositories/app.repository.js'
 import { reportSchema } from './schemas/report.schema.js'
+import { sendReportToFeishu } from './feishu.service.js'
 
 const STREAM_DELAY_MS = 320
 
@@ -295,28 +296,44 @@ export function createReportModule() {
   })
 
   router.post('/:id/send-feishu', async (req, res) => {
-    await repository.markReportPushed(req.params.id)
-    res.json(
-      ok({
-        reportId: req.params.id,
-        success: true,
-        message: '已推送到飞书机器人与日报文档。',
-      }),
-    )
+    const report = (await repository.listReports()).find((item) => item.id === req.params.id)
+    if (!report) {
+      res.status(404).json({
+        code: 404,
+        message: '日报不存在',
+        data: null,
+      })
+      return
+    }
+
+    const feishuConfig = await repository.getFeishuConfig()
+    const result = await sendReportToFeishu(report, feishuConfig)
+    if (result.success) {
+      await repository.markReportPushed(req.params.id)
+    }
+    res.json(ok({ reportId: req.params.id, ...result }, result.message))
   })
 
   router.post('/send-feishu', async (req, res) => {
     const body = req.body as { reportId?: string }
-    if (body.reportId) {
-      await repository.markReportPushed(body.reportId)
+    const reportId = body.reportId ?? ''
+    const report = reportId ? (await repository.listReports()).find((item) => item.id === reportId) : null
+
+    if (!report) {
+      res.status(404).json({
+        code: 404,
+        message: '日报不存在',
+        data: null,
+      })
+      return
     }
-    res.json(
-      ok({
-        reportId: body.reportId ?? '',
-        success: true,
-        message: '已推送到飞书机器人与日报文档。',
-      }),
-    )
+
+    const feishuConfig = await repository.getFeishuConfig()
+    const result = await sendReportToFeishu(report, feishuConfig)
+    if (result.success) {
+      await repository.markReportPushed(reportId)
+    }
+    res.json(ok({ reportId, ...result }, result.message))
   })
 
   return router

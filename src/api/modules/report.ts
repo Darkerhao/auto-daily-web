@@ -2,6 +2,7 @@ import { request } from '../request'
 import type {
   CommitItem,
   FeishuSendPayload,
+  FeishuSendResult,
   GenerateReportPayload,
   GeneratedReport,
   PromptPreset,
@@ -21,6 +22,6 @@ export const reportApi = {
     return request.post<GeneratedReport>('/report/generate', payload)
   },
   sendFeishu(payload: FeishuSendPayload) {
-    return request.post<{ success: boolean; message: string }>('/report/send-feishu', payload)
+    return request.post<FeishuSendResult>('/report/send-feishu', payload)
   },
 }

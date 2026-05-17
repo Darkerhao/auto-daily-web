@@ -16,6 +16,8 @@ export const feishuSettingsSchema = z.object({
   webhookUrl: z.string(),
   botSecret: z.string(),
   docUrl: z.string(),
+  appId: z.string(),
+  appSecret: z.string(),
   autoSendTime: z.string(),
   enableRobot: z.boolean(),
   enableDocSync: z.boolean(),

@@ -3,7 +3,7 @@
     <div class="ai-stream-panel__header">
       <div>
         <h3 class="panel-title">AI 生成流</h3>
-        <div class="panel-subtitle">展示后端 SSE 实时增量输出，便于确认生成过程与最终结果。</div>
+        <div class="panel-subtitle">{{ subtitle }}</div>
       </div>
       <n-spin v-if="loading" size="small" />
     </div>
@@ -13,10 +13,25 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   content: string
   loading: boolean
+  mode: 'live' | 'recent' | 'summary'
 }>()
+
+const subtitle = computed(() => {
+  if (props.loading || props.mode === 'live') {
+    return '展示后端 SSE 实时增量输出，便于确认生成过程与最终结果。'
+  }
+
+  if (props.mode === 'recent') {
+    return '展示最近一次生成时的完整流记录，便于回看 AI 逐步归纳过程。'
+  }
+
+  return '当前未在重新生成，展示所选日报的摘要、风险项与明日计划。'
+})
 </script>
 
 <style scoped lang="less">

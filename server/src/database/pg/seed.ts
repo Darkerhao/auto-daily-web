@@ -131,9 +131,9 @@ export async function seedDatabase() {
   await pool.query(
     `
     INSERT INTO feishu_settings (
-      id, webhook_url, bot_secret, doc_url, auto_send_time, enable_robot, enable_doc_sync
+      id, webhook_url, bot_secret, doc_url, app_id, app_secret, auto_send_time, enable_robot, enable_doc_sync
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
     ON CONFLICT (id) DO NOTHING
     `,
     [
@@ -141,6 +141,8 @@ export async function seedDatabase() {
       feishuConfig.webhookUrl,
       feishuConfig.botSecret,
       feishuConfig.docUrl,
+      feishuConfig.appId,
+      feishuConfig.appSecret,
       feishuConfig.autoSendTime,
       feishuConfig.enableRobot,
       feishuConfig.enableDocSync,

@@ -129,6 +129,8 @@ export const feishuConfig = {
   webhookUrl: 'https://open.feishu.cn/open-apis/bot/v2/hook/example',
   botSecret: 'bot-secret-example',
   docUrl: 'https://jiazi.feishu.cn/docx/example',
+  appId: '',
+  appSecret: '',
   autoSendTime: '18:30',
   enableRobot: true,
   enableDocSync: true,

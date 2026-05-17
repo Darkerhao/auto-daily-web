@@ -50,6 +50,14 @@ export interface FeishuSendPayload {
   reportId: string
 }
 
+export interface FeishuSendResult {
+  success: boolean
+  message: string
+  robotSent: boolean
+  docSynced: boolean
+  warnings: string[]
+}
+
 export interface StreamChunk {
   delta: string
   done: boolean

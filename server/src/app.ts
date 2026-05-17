@@ -8,6 +8,7 @@ import { createRepositoryModule } from './modules/repository/repository.module.j
 import { createLegacyCommitModule, createReportModule } from './modules/report/report.module.js'
 import { createSettingsModule } from './modules/settings/settings.module.js'
 import { createSystemModule } from './modules/system/system.module.js'
+import { createStubWebhookModule } from './modules/system/stub-webhook.module.js'
 
 export function createApp() {
   const app = express()
@@ -31,6 +32,7 @@ export function createApp() {
   app.use('/api/report', createReportModule())
   app.use('/api/commit', createLegacyCommitModule())
   app.use('/api/settings', createSettingsModule())
+  app.use('/api/stub', createStubWebhookModule())
 
   app.use(errorHandler)
   return app

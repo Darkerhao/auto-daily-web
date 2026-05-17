@@ -16,6 +16,8 @@ export interface FeishuConfig {
   webhookUrl: string
   botSecret: string
   docUrl: string
+  appId: string
+  appSecret: string
   autoSendTime: string
   enableRobot: boolean
   enableDocSync: boolean

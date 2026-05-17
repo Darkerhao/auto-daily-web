@@ -19,6 +19,19 @@
             <n-input v-model:value="form.docUrl" />
           </n-form-item>
           <div class="grid-2">
+            <n-form-item label="应用 App ID">
+              <n-input v-model:value="form.appId" placeholder="cli_xxx，仅文档同步需要" />
+            </n-form-item>
+            <n-form-item label="应用 App Secret">
+              <n-input
+                v-model:value="form.appSecret"
+                type="password"
+                show-password-on="click"
+                placeholder="仅文档同步需要"
+              />
+            </n-form-item>
+          </div>
+          <div class="grid-2">
             <n-form-item label="自动发送时间">
               <n-time-picker
                 v-model:formatted-value="form.autoSendTime"
@@ -45,7 +58,8 @@
       <div class="glass-panel section-card">
         <h3 class="panel-title">推送链路说明</h3>
         <p class="panel-subtitle">
-          当前前端演示已模拟机器人与文档双通道配置，后续接入真实后端时可直接映射到企业内部飞书应用凭证体系。
+          机器人推送使用群机器人 Webhook；文档同步需要飞书开放平台自建应用的 App ID / App Secret
+          来换取 tenant_access_token。
         </p>
         <div class="feishu__steps">
           <div class="feishu__step">

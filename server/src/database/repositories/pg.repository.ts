@@ -374,6 +374,8 @@ export function createPgRepository() {
         webhookUrl: row.webhook_url,
         botSecret: row.bot_secret,
         docUrl: row.doc_url,
+        appId: row.app_id,
+        appSecret: row.app_secret,
         autoSendTime: row.auto_send_time,
         enableRobot: row.enable_robot,
         enableDocSync: row.enable_doc_sync,
@@ -383,6 +385,8 @@ export function createPgRepository() {
       webhookUrl: string
       botSecret: string
       docUrl: string
+      appId: string
+      appSecret: string
       autoSendTime: string
       enableRobot: boolean
       enableDocSync: boolean
@@ -390,13 +394,15 @@ export function createPgRepository() {
       await pool.query(
         `
         INSERT INTO feishu_settings (
-          id, webhook_url, bot_secret, doc_url, auto_send_time, enable_robot, enable_doc_sync
+          id, webhook_url, bot_secret, doc_url, app_id, app_secret, auto_send_time, enable_robot, enable_doc_sync
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         ON CONFLICT (id) DO UPDATE SET
           webhook_url = EXCLUDED.webhook_url,
           bot_secret = EXCLUDED.bot_secret,
           doc_url = EXCLUDED.doc_url,
+          app_id = EXCLUDED.app_id,
+          app_secret = EXCLUDED.app_secret,
           auto_send_time = EXCLUDED.auto_send_time,
           enable_robot = EXCLUDED.enable_robot,
           enable_doc_sync = EXCLUDED.enable_doc_sync
@@ -406,6 +412,8 @@ export function createPgRepository() {
           payload.webhookUrl,
           payload.botSecret,
           payload.docUrl,
+          payload.appId,
+          payload.appSecret,
           payload.autoSendTime,
           payload.enableRobot,
           payload.enableDocSync,

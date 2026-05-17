@@ -19,6 +19,11 @@ interface ReportPreferences {
   historyFilters: ReportHistoryFilters
 }
 
+interface StreamPanelState {
+  latestReportId: string
+  latestContent: string
+}
+
 const defaultReportPreferences: ReportPreferences = {
   selectedRepoId: '',
   selectedPromptId: 'professional',
@@ -31,16 +36,27 @@ const defaultReportPreferences: ReportPreferences = {
   },
 }
 
+const defaultStreamPanelState: StreamPanelState = {
+  latestReportId: '',
+  latestContent: '',
+}
+
 export const useReportStore = defineStore('report', () => {
   const reportPreferences = readStorage<ReportPreferences>(
     storageKeys.reportPreferences,
     defaultReportPreferences,
+  )
+  const streamPanelState = readStorage<StreamPanelState>(
+    storageKeys.reportStreamPanel,
+    defaultStreamPanelState,
   )
   const commits = ref<CommitItem[]>([])
   const reports = ref<GeneratedReport[]>([])
   const prompts = ref<PromptPreset[]>([])
   const currentReport = ref<GeneratedReport | null>(null)
   const streamContent = ref('')
+  const latestStreamReportId = ref(streamPanelState.latestReportId)
+  const latestStreamContent = ref(streamPanelState.latestContent)
   const selectedRepoId = ref(reportPreferences.selectedRepoId)
   const selectedPromptId = ref<ReportTone>(reportPreferences.selectedPromptId)
   const selectedReportId = ref(reportPreferences.selectedReportId)
@@ -53,6 +69,27 @@ export const useReportStore = defineStore('report', () => {
       selectedReportId: selectedReportId.value,
       historyFilters: historyFilters.value,
     } satisfies ReportPreferences)
+  }
+
+  function persistStreamPanelState() {
+    writeStorage(storageKeys.reportStreamPanel, {
+      latestReportId: latestStreamReportId.value,
+      latestContent: latestStreamContent.value,
+    } satisfies StreamPanelState)
+  }
+
+  async function appendStreamWithTypewriter(delta: string) {
+    for (const char of delta) {
+      streamContent.value += char
+
+      if (char === '\n') {
+        continue
+      }
+
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, /\s/.test(char) ? 8 : 18)
+      })
+    }
   }
 
   function syncCurrentReport() {
@@ -92,8 +129,8 @@ export const useReportStore = defineStore('report', () => {
     let generatedReport: GeneratedReport | null = null
 
     for await (const chunk of createReportStream(payload)) {
-      if (!chunk.done) {
-        streamContent.value += chunk.delta
+      if (!chunk.done && chunk.delta) {
+        await appendStreamWithTypewriter(chunk.delta)
       }
 
       if (chunk.report) {
@@ -107,6 +144,8 @@ export const useReportStore = defineStore('report', () => {
 
     currentReport.value = generatedReport
     selectedReportId.value = generatedReport.id
+    latestStreamReportId.value = generatedReport.id
+    latestStreamContent.value = streamContent.value
     await fetchReports()
     return generatedReport
   }
@@ -119,6 +158,7 @@ export const useReportStore = defineStore('report', () => {
   }
 
   function selectReport(report: GeneratedReport) {
+    streamContent.value = ''
     currentReport.value = report
     selectedReportId.value = report.id
   }
@@ -133,6 +173,9 @@ export const useReportStore = defineStore('report', () => {
   watch([selectedRepoId, selectedPromptId, selectedReportId, historyFilters], persistPreferences, {
     deep: true,
   })
+  watch([latestStreamReportId, latestStreamContent], persistStreamPanelState, {
+    deep: true,
+  })
 
   return {
     commits,
@@ -140,6 +183,8 @@ export const useReportStore = defineStore('report', () => {
     prompts,
     currentReport,
     streamContent,
+    latestStreamReportId,
+    latestStreamContent,
     selectedRepoId,
     selectedPromptId,
     selectedReportId,

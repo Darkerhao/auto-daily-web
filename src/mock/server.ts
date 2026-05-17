@@ -156,6 +156,9 @@ export async function sendFeishu(payload: FeishuSendPayload) {
   return wait({
     success: true,
     message: '已推送到飞书机器人与日报文档。',
+    robotSent: true,
+    docSynced: true,
+    warnings: [],
   })
 }
 

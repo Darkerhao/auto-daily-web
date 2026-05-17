@@ -36,7 +36,7 @@
       </div>
 
       <div class="report-grid__right">
-        <AiStreamPanel :content="reportStore.streamContent" :loading="generating" />
+        <AiStreamPanel :content="streamPanelContent" :loading="generating" :mode="streamPanelMode" />
         <PromptTemplateTabs v-model:value="selectedPromptId" :options="prompts" />
 
         <div class="glass-panel section-card">
@@ -154,6 +154,49 @@ const repoOptions = computed(() =>
 const commits = computed(() => reportStore.commits)
 const prompts = computed(() => reportStore.prompts)
 const currentReport = computed(() => reportStore.currentReport ?? reportStore.reports[0] ?? null)
+const streamPanelMode = computed<'live' | 'recent' | 'summary'>(() => {
+  if (generating.value || reportStore.streamContent.trim().length > 0) {
+    return 'live'
+  }
+
+  if (
+    currentReport.value &&
+    currentReport.value.id === reportStore.latestStreamReportId &&
+    reportStore.latestStreamContent.trim().length > 0
+  ) {
+    return 'recent'
+  }
+
+  return 'summary'
+})
+const streamPanelContent = computed(() => {
+  const liveStream = reportStore.streamContent.trim()
+  if (liveStream.length > 0) {
+    return liveStream
+  }
+
+  if (
+    currentReport.value &&
+    currentReport.value.id === reportStore.latestStreamReportId &&
+    reportStore.latestStreamContent.trim().length > 0
+  ) {
+    return reportStore.latestStreamContent
+  }
+
+  if (!currentReport.value) {
+    return ''
+  }
+
+  return [
+    `当前展示的是历史日报摘要：${currentReport.value.title}`,
+    `仓库：${currentReport.value.repoName} · 风格：${currentReport.value.style} · Token：${currentReport.value.tokenCost}`,
+    '',
+    currentReport.value.summary,
+    '',
+    `风险项：${currentReport.value.riskItems.join('；') || '暂无'}`,
+    `明日计划：${currentReport.value.tomorrowPlan.join('；') || '暂无'}`,
+  ].join('\n')
+})
 const filteredReports = computed(() => {
   const keyword = reportStore.historyFilters.keyword.trim().toLowerCase()
   return reportStore.reports.filter((item) => {
@@ -248,7 +291,12 @@ async function handlePushFeishu() {
   }
 
   const result = await reportStore.pushFeishu(currentReport.value.id)
-  message.success(result.message)
+  if (result.success) {
+    message.success(result.message)
+    return
+  }
+
+  message.warning(result.message)
 }
 
 watch(selectedRepoId, (value) => {
