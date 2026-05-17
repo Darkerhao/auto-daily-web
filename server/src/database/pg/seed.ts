@@ -6,11 +6,17 @@ export async function seedDatabase() {
 
   await pool.query(
     `
-    INSERT INTO app_users (id, name, email, avatar, role, company)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    ON CONFLICT (id) DO NOTHING
+    INSERT INTO app_users (id, name, email, avatar, role, company, permissions)
+    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      email = EXCLUDED.email,
+      avatar = EXCLUDED.avatar,
+      role = EXCLUDED.role,
+      company = EXCLUDED.company,
+      permissions = EXCLUDED.permissions
     `,
-    [user.id, user.name, user.email, user.avatar, user.role, user.company],
+    [user.id, user.name, user.email, user.avatar, user.role, user.company, JSON.stringify(user.permissions)],
   )
 
   for (const repository of repositories) {
@@ -71,9 +77,18 @@ export async function seedDatabase() {
   for (const commit of commits) {
     await pool.query(
       `
-      INSERT INTO commits (id, hash, short_hash, message, author, time, branch, modules, files)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb)
-      ON CONFLICT (id) DO NOTHING
+      INSERT INTO commits (id, hash, short_hash, message, author, time, branch, modules, files, repo_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10)
+      ON CONFLICT (id) DO UPDATE SET
+        hash = EXCLUDED.hash,
+        short_hash = EXCLUDED.short_hash,
+        message = EXCLUDED.message,
+        author = EXCLUDED.author,
+        time = EXCLUDED.time,
+        branch = EXCLUDED.branch,
+        modules = EXCLUDED.modules,
+        files = EXCLUDED.files,
+        repo_id = EXCLUDED.repo_id
       `,
       [
         commit.id,
@@ -85,6 +100,7 @@ export async function seedDatabase() {
         commit.branch,
         JSON.stringify(commit.modules),
         JSON.stringify(commit.files),
+        'repo-1',
       ],
     )
   }

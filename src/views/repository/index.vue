@@ -135,6 +135,15 @@ const columns: DataTableColumns<RepositoryItem> = [
           {
             size: 'small',
             secondary: true,
+            onClick: () => handleSync(row.id),
+          },
+          { default: () => '同步' },
+        ),
+        h(
+          NButton,
+          {
+            size: 'small',
+            secondary: true,
             onClick: () => editRow(row),
           },
           { default: () => '编辑' },
@@ -186,6 +195,11 @@ async function handleSave() {
 async function handleDelete(id: string) {
   await repositoryStore.deleteRepository(id)
   message.success('仓库已删除')
+}
+
+async function handleSync(id: string) {
+  const result = await repositoryStore.syncRepository(id)
+  message.success(`${result.message}，共 ${result.syncedCount} 条提交`)
 }
 
 async function handleTestConnection() {

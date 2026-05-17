@@ -19,6 +19,9 @@ function createMemoryRepository() {
     async listRepositories() {
       return db.repositories
     },
+    async getRepositoryById(id: string) {
+      return db.repositories.find((item) => item.id === id) ?? null
+    },
     async saveRepository(repository: (typeof db.repositories)[number]) {
       const index = db.repositories.findIndex((item) => item.id === repository.id)
       if (index >= 0) {
@@ -31,6 +34,46 @@ function createMemoryRepository() {
     async removeRepository(id: string) {
       db.repositories = db.repositories.filter((item) => item.id !== id)
       return true
+    },
+    async replaceCommitsForRepo(repoId: string, commits: Array<{
+      id: string
+      repoId: string
+      hash: string
+      shortHash: string
+      message: string
+      author: string
+      time: string
+      branch: string
+      modules: string[]
+      files: Array<{
+        path: string
+        language: string
+        additions: number
+        deletions: number
+        patch: string[]
+      }>
+    }>) {
+      db.commits = [
+        ...db.commits.filter((item) => !item.id.startsWith(`${repoId}-`)),
+        ...commits.map((item) => ({
+          id: item.id.replace(`${repoId}-`, ''),
+          hash: item.hash,
+          shortHash: item.shortHash,
+          message: item.message,
+          author: item.author,
+          time: item.time,
+          branch: item.branch,
+          modules: item.modules,
+          files: item.files,
+        })),
+      ]
+    },
+    async touchRepositorySync(repoId: string, commitCountToday: number) {
+      const target = db.repositories.find((item) => item.id === repoId)
+      if (target) {
+        target.lastSyncAt = new Date().toISOString()
+        target.commitCountToday = commitCountToday
+      }
     },
     async listReports() {
       return db.reports
@@ -52,10 +95,12 @@ function createMemoryRepository() {
       return target ?? null
     },
     async listCommitsByRepo(repoId: string) {
-      return db.commits.map((item) => ({
-        ...item,
-        id: `${repoId}-${item.id}`,
-      }))
+      return db.commits
+        .filter((item) => item.id.startsWith(`${repoId}-`) || repoId === 'repo-1')
+        .map((item) => ({
+          ...item,
+          id: item.id.startsWith(`${repoId}-`) ? item.id : `${repoId}-${item.id}`,
+        }))
     },
     async getModelSettings() {
       return db.modelSettings

@@ -7,6 +7,7 @@
     >
       <n-space>
         <n-select v-model:value="selectedRepoId" :options="repoOptions" style="width: 240px" />
+        <n-button secondary @click="handleSyncRepository">同步并刷新</n-button>
         <n-button :loading="generating" type="primary" @click="handleGenerate">重新生成</n-button>
       </n-space>
     </SectionHeader>
@@ -26,7 +27,7 @@
               @click="activeFile = file"
             >
               <span>{{ file.path }}</span>
-              <small class="mono">+{{ file.additions }} / -{{ file.deletions }}</small>
+              <small class="mono">{{ file.status ?? 'modified' }} · +{{ file.additions }} / -{{ file.deletions }}</small>
             </button>
           </div>
         </div>
@@ -220,6 +221,17 @@ async function handleGenerate() {
   })
 }
 
+async function handleSyncRepository() {
+  if (!selectedRepoId.value) {
+    message.warning('请先选择仓库')
+    return
+  }
+
+  const result = await repositoryStore.syncRepository(selectedRepoId.value)
+  await hydrateRepoCommits(selectedRepoId.value)
+  message.success(`${result.message}，共 ${result.syncedCount} 条提交`)
+}
+
 async function handleCopy() {
   if (!currentReport.value) {
     message.warning('暂无可复制日报')
@@ -271,6 +283,10 @@ onMounted(async () => {
     currentReport.value?.repoId ||
     repositoryStore.repositories[0]?.id ||
     ''
+
+  if (selectedRepoId.value) {
+    await hydrateRepoCommits(selectedRepoId.value)
+  }
 })
 </script>
 

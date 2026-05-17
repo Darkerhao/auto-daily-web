@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { ok } from '../../common/types/api.js'
 import { createAppRepository } from '../../database/repositories/app.repository.js'
 import { repositorySchema } from './schemas/repository.schema.js'
+import { syncRepositoryCommits } from '../git-sync/git-sync.service.js'
 
 export function createRepositoryModule() {
   const router = Router()
@@ -72,15 +73,42 @@ export function createRepositoryModule() {
     )
   })
 
-  router.delete('/:id', async (req, res) => {
-    await repositoryStore.removeRepository(req.params.id)
-    res.json(ok({ id: req.params.id, deleted: true }))
+  router.post('/sync', async (req, res) => {
+    const repoId = typeof req.body.repoId === 'string' ? req.body.repoId : ''
+    const repository = await repositoryStore.getRepositoryById(repoId)
+
+    if (!repository) {
+      res.status(404).json({
+        code: 404,
+        message: '仓库不存在',
+        data: null,
+      })
+      return
+    }
+
+    const commits = await syncRepositoryCommits(repository)
+    await repositoryStore.replaceCommitsForRepo(repoId, commits)
+    await repositoryStore.touchRepositorySync(repoId, commits.length)
+
+    res.json(
+      ok({
+        repoId,
+        syncedCount: commits.length,
+        latestCommit: commits[0]?.shortHash ?? '',
+        message: '仓库手动同步完成',
+      }),
+    )
   })
 
   router.delete('/delete', async (req, res) => {
     const repoId = typeof req.query.repoId === 'string' ? req.query.repoId : ''
     await repositoryStore.removeRepository(repoId)
     res.json(ok(true))
+  })
+
+  router.delete('/:id', async (req, res) => {
+    await repositoryStore.removeRepository(req.params.id)
+    res.json(ok({ id: req.params.id, deleted: true }))
   })
 
   return router

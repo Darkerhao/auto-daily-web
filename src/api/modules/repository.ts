@@ -18,4 +18,10 @@ export const repositoryApi = {
   test(payload: RepositoryForm) {
     return request.post<RepositoryConnectionResult>('/repository/test', payload)
   },
+  sync(repoId: string) {
+    return request.post<{ repoId: string; syncedCount: number; latestCommit: string; message: string }>(
+      '/repository/sync',
+      { repoId },
+    )
+  },
 }

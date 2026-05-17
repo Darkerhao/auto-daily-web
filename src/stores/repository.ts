@@ -32,6 +32,12 @@ export const useRepositoryStore = defineStore('repository', () => {
     return lastConnectionResult.value
   }
 
+  async function syncRepository(id: string) {
+    const result = await repositoryApi.sync(id)
+    await fetchRepositories()
+    return result
+  }
+
   return {
     repositories,
     lastConnectionResult,
@@ -39,5 +45,6 @@ export const useRepositoryStore = defineStore('repository', () => {
     saveRepository,
     deleteRepository,
     testConnection,
+    syncRepository,
   }
 })

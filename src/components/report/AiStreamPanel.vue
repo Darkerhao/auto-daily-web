@@ -3,7 +3,7 @@
     <div class="ai-stream-panel__header">
       <div>
         <h3 class="panel-title">AI 生成流</h3>
-        <div class="panel-subtitle">模拟真实流式渲染，适配后端 SSE / WebSocket。</div>
+        <div class="panel-subtitle">展示后端 SSE 实时增量输出，便于确认生成过程与最终结果。</div>
       </div>
       <n-spin v-if="loading" size="small" />
     </div>

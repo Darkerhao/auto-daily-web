@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+server/.env
+server/dist
+server/node_modules
+frontend-dev.log
+server/server-dev.log
+.playwright-mcp
 
 # Editor directories and files
 .vscode/*

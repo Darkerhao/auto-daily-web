@@ -14,6 +14,7 @@ export function createPgRepository() {
         avatar: row.avatar,
         role: row.role,
         company: row.company,
+        permissions: row.permissions,
       }
     },
     async getDashboardSummary() {
@@ -62,6 +63,27 @@ export function createPgRepository() {
         enabled: row.enabled,
         tags: row.tags,
       }))
+    },
+    async getRepositoryById(id: string) {
+      const result = await pool.query('SELECT * FROM repositories WHERE id = $1 LIMIT 1', [id])
+      const row = result.rows[0]
+      if (!row) {
+        return null
+      }
+      return {
+        id: row.id,
+        name: row.name,
+        provider: row.provider,
+        url: row.url,
+        branch: row.branch,
+        token: row.token,
+        syncFrequency: row.sync_frequency,
+        lastSyncAt: row.last_sync_at,
+        owner: row.owner,
+        commitCountToday: row.commit_count_today,
+        enabled: row.enabled,
+        tags: row.tags,
+      }
     },
     async saveRepository(repository: {
       id: string
@@ -117,6 +139,58 @@ export function createPgRepository() {
     async removeRepository(id: string) {
       await pool.query('DELETE FROM repositories WHERE id = $1', [id])
       return true
+    },
+    async replaceCommitsForRepo(repoId: string, commits: Array<{
+      id: string
+      repoId: string
+      hash: string
+      shortHash: string
+      message: string
+      author: string
+      time: string
+      branch: string
+      modules: string[]
+      files: Array<{
+        path: string
+        language: string
+        additions: number
+        deletions: number
+        patch: string[]
+      }>
+    }>) {
+      await pool.query('DELETE FROM commits WHERE repo_id = $1', [repoId])
+
+      for (const commit of commits) {
+        await pool.query(
+          `
+          INSERT INTO commits (id, repo_id, hash, short_hash, message, author, time, branch, modules, files)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb)
+          `,
+          [
+            commit.id,
+            commit.repoId,
+            commit.hash,
+            commit.shortHash,
+            commit.message,
+            commit.author,
+            commit.time,
+            commit.branch,
+            JSON.stringify(commit.modules),
+            JSON.stringify(commit.files),
+          ],
+        )
+      }
+    },
+    async touchRepositorySync(repoId: string, commitCountToday: number) {
+      await pool.query(
+        `
+        UPDATE repositories
+        SET last_sync_at = $2,
+            commit_count_today = $3
+        WHERE id = $1
+        `,
+        [repoId, new Date().toISOString(), commitCountToday],
+      )
     },
     async listReports() {
       const result = await pool.query('SELECT * FROM reports ORDER BY created_at DESC')
@@ -221,9 +295,9 @@ export function createPgRepository() {
       }
     },
     async listCommitsByRepo(repoId: string) {
-      const result = await pool.query('SELECT * FROM commits ORDER BY time DESC')
+      const result = await pool.query('SELECT * FROM commits WHERE repo_id = $1 ORDER BY time DESC', [repoId])
       return result.rows.map((row) => ({
-        id: `${repoId}-${row.id}`,
+        id: row.id,
         hash: row.hash,
         shortHash: row.short_hash,
         message: row.message,

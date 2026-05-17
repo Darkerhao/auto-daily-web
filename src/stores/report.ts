@@ -89,16 +89,26 @@ export const useReportStore = defineStore('report', () => {
     selectedRepoId.value = payload.repoId
     selectedPromptId.value = payload.style
     streamContent.value = ''
+    let generatedReport: GeneratedReport | null = null
+
     for await (const chunk of createReportStream(payload)) {
       if (!chunk.done) {
         streamContent.value += chunk.delta
       }
+
+      if (chunk.report) {
+        generatedReport = chunk.report
+      }
     }
 
-    currentReport.value = await reportApi.generate(payload)
-    selectedReportId.value = currentReport.value.id
+    if (!generatedReport) {
+      throw new Error('未收到日报生成结果')
+    }
+
+    currentReport.value = generatedReport
+    selectedReportId.value = generatedReport.id
     await fetchReports()
-    return currentReport.value
+    return generatedReport
   }
 
   async function pushFeishu(reportId: string) {

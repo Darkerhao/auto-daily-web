@@ -1,51 +1,102 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createDiscreteApi } from 'naive-ui'
-import { appRoutes, workspaceChildren } from './routes'
 import { useAuthStore } from '@/stores/auth'
 import { usePermission } from '@/hooks/usePermission'
 
 const { message } = createDiscreteApi(['message'])
 
-function toRouteRecord(route: (typeof appRoutes)[number]): RouteRecordRaw {
-  const base: RouteRecordRaw = {
-    path: route.path,
-    name: route.name,
-    component: route.component,
-  }
-
-  if (route.meta) {
-    base.meta = route.meta
-  }
-
-  return base
-}
-
-function toWorkspaceChildRecord(route: (typeof workspaceChildren)[number]): RouteRecordRaw {
-  const child: RouteRecordRaw = {
-    path: route.path,
-    name: route.name,
-    component: route.component,
-  }
-
-  if (route.meta) {
-    child.meta = route.meta
-  }
-
-  return child
-}
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    name: 'landing',
+    component: () => import('@/views/landing/index.vue'),
+    meta: {
+      title: '甲子日报 AI',
+    },
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/auth/index.vue'),
+    meta: {
+      title: '登录',
+    },
+  },
+  {
+    path: '/workspace',
+    component: () => import('@/layouts/AppLayout.vue'),
+    meta: {
+      title: '工作台',
+      requiresAuth: true,
+    },
+    redirect: '/workspace/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/dashboard/index.vue'),
+        meta: {
+          title: '控制台',
+          requiresAuth: true,
+          permission: 'dashboard:view',
+        },
+      },
+      {
+        path: 'repositories',
+        name: 'repositories',
+        component: () => import('@/views/repository/index.vue'),
+        meta: {
+          title: '仓库管理',
+          requiresAuth: true,
+          permission: 'repository:manage',
+        },
+      },
+      {
+        path: 'reports',
+        name: 'reports',
+        component: () => import('@/views/report/index.vue'),
+        meta: {
+          title: '日报生成',
+          requiresAuth: true,
+          permission: 'report:generate',
+        },
+      },
+      {
+        path: 'feishu',
+        name: 'feishu',
+        component: () => import('@/views/feishu/index.vue'),
+        meta: {
+          title: '飞书配置',
+          requiresAuth: true,
+          permission: 'feishu:manage',
+        },
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/views/settings/index.vue'),
+        meta: {
+          title: '设置中心',
+          requiresAuth: true,
+          permission: 'settings:manage',
+        },
+      },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/landing/index.vue'),
+    meta: {
+      title: '首页',
+    },
+  },
+]
 
 export const router = createRouter({
   history: createWebHistory(),
-  routes: appRoutes.map((route) =>
-    route.path === '/workspace'
-      ? {
-          ...toRouteRecord(route),
-          redirect: '/workspace/dashboard',
-          children: workspaceChildren.map(toWorkspaceChildRecord),
-        }
-      : toRouteRecord(route),
-  ),
+  routes,
 })
 
 router.beforeEach((to) => {
@@ -70,11 +121,7 @@ router.beforeEach((to) => {
   }
 
   if (authStore.isAuthenticated && to.path === '/login') {
-    const redirectTarget =
-      typeof to.query.redirect === 'string' && to.query.redirect !== '/login'
-        ? to.query.redirect
-        : '/workspace/dashboard'
-    return redirectTarget
+    return typeof to.query.redirect === 'string' ? to.query.redirect : '/workspace/dashboard'
   }
 
   if (authStore.isAuthenticated && to.path === '/') {

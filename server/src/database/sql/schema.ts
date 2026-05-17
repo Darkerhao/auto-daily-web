@@ -5,8 +5,12 @@ CREATE TABLE IF NOT EXISTS app_users (
   email TEXT NOT NULL,
   avatar TEXT NOT NULL,
   role TEXT NOT NULL,
-  company TEXT NOT NULL
+  company TEXT NOT NULL,
+  permissions JSONB NOT NULL DEFAULT '[]'::jsonb
 );
+
+ALTER TABLE app_users
+ADD COLUMN IF NOT EXISTS permissions JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS repositories (
   id TEXT PRIMARY KEY,
@@ -41,6 +45,7 @@ CREATE TABLE IF NOT EXISTS reports (
 
 CREATE TABLE IF NOT EXISTS commits (
   id TEXT PRIMARY KEY,
+  repo_id TEXT NOT NULL,
   hash TEXT NOT NULL,
   short_hash TEXT NOT NULL,
   message TEXT NOT NULL,
@@ -50,6 +55,9 @@ CREATE TABLE IF NOT EXISTS commits (
   modules JSONB NOT NULL DEFAULT '[]'::jsonb,
   files JSONB NOT NULL DEFAULT '[]'::jsonb
 );
+
+ALTER TABLE commits
+ADD COLUMN IF NOT EXISTS repo_id TEXT NOT NULL DEFAULT 'repo-1';
 
 CREATE TABLE IF NOT EXISTS model_settings (
   id TEXT PRIMARY KEY,

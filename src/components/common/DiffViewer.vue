@@ -3,7 +3,9 @@
     <div class="diff-viewer__header">
       <div>
         <h3 class="panel-title">{{ file.path }}</h3>
-        <div class="panel-subtitle">{{ file.language }} · +{{ file.additions }} / -{{ file.deletions }}</div>
+        <div class="panel-subtitle">
+          {{ file.language }} · {{ file.status ?? 'modified' }} · +{{ file.additions }} / -{{ file.deletions }}
+        </div>
       </div>
     </div>
 

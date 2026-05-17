@@ -7,6 +7,7 @@ export interface DiffFile {
   language: string
   additions: number
   deletions: number
+  status?: string
   patch: string[]
 }
 
@@ -52,6 +53,7 @@ export interface FeishuSendPayload {
 export interface StreamChunk {
   delta: string
   done: boolean
+  report?: GeneratedReport
 }
 
 export interface PromptPreset {

@@ -93,6 +93,11 @@ pnpm --dir server install
 pnpm dev:server
 ```
 
+说明：
+
+- `dev:server` 现在会先检查 `3000` 端口是否空闲
+- 如果端口被其他进程占用，会直接退出并提示，避免前端代理继续报 `502`
+
 如需初始化 PostgreSQL 表结构与种子数据：
 
 ```bash
@@ -105,6 +110,17 @@ pnpm --dir server db:init
 pnpm dev:server
 pnpm dev
 ```
+
+本地联调当前已验证通过：
+
+- 登录接口
+- Dashboard 概览接口
+- 仓库列表读取
+- 仓库测试连接
+- 日报列表读取
+- Commit 列表读取
+- 日报生成写入
+- 日报推送状态回写
 
 默认开发地址：
 
@@ -260,6 +276,7 @@ pnpm preview
 数据库初始化：
 
 - `api` 容器启动时会自动执行 `pnpm db:init`
+- `redis` 默认只在 Docker 内网暴露，不绑定宿主机 `6379`，避免与本机已有 Redis 冲突
 
 ## 后续建议
 

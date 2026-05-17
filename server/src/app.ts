@@ -3,6 +3,7 @@ import cors from 'cors'
 import { errorHandler } from './common/filters/error-handler.js'
 import { createAuthModule } from './modules/auth/auth.module.js'
 import { createDashboardModule } from './modules/dashboard/dashboard.module.js'
+import { createGitSyncModule } from './modules/git-sync/git-sync.module.js'
 import { createRepositoryModule } from './modules/repository/repository.module.js'
 import { createLegacyCommitModule, createReportModule } from './modules/report/report.module.js'
 import { createSettingsModule } from './modules/settings/settings.module.js'
@@ -23,6 +24,7 @@ export function createApp() {
   app.use('/api/auth', createAuthModule())
   app.use('/api', createAuthModule())
   app.use('/api/dashboard', createDashboardModule())
+  app.use('/api/git-sync', createGitSyncModule())
   app.use('/api/repositories', createRepositoryModule())
   app.use('/api/repository', createRepositoryModule())
   app.use('/api/reports', createReportModule())
