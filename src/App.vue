@@ -4,7 +4,11 @@
       <n-dialog-provider>
         <n-notification-provider>
           <n-message-provider>
-            <RouterView />
+            <RouterView v-slot="{ Component, route }">
+              <transition name="page-fade" mode="out-in">
+                <component :is="Component" :key="route.fullPath" />
+              </transition>
+            </RouterView>
           </n-message-provider>
         </n-notification-provider>
       </n-dialog-provider>

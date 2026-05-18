@@ -15,6 +15,11 @@
         <p class="landing__desc">
           连接 Git 仓库，AI 自动分析 Commit 与 Diff，一键生成专业日报并同步飞书。适配研发团队、外包交付与企业 SaaS 场景。
         </p>
+        <div class="landing__highlights info-pills">
+          <span class="info-pill">流式生成</span>
+          <span class="info-pill">多仓库聚合</span>
+          <span class="info-pill">飞书双通道投递</span>
+        </div>
         <div class="landing__cta">
           <n-button type="primary" size="large" @click="router.push('/login')">
             立即开始
@@ -34,14 +39,17 @@
           <div class="landing__metric glass-panel">
             <strong>22+</strong>
             <span>今日 Commit 自动聚合</span>
+            <small>覆盖前端平台、交付项目与 Worker 服务</small>
           </div>
           <div class="landing__metric glass-panel">
             <strong>98.4%</strong>
             <span>飞书推送成功率</span>
+            <small>机器人消息与文档同步链路实时反馈</small>
           </div>
           <div class="landing__metric glass-panel">
             <strong>18,420</strong>
             <span>今日 Token 消耗监控</span>
+            <small>按模型调用成本观察日报生成效率</small>
           </div>
         </div>
       </div>
@@ -49,11 +57,23 @@
       <div class="landing__hero-demo glass-panel-strong">
         <div class="landing__demo-orbit"></div>
         <div class="landing__demo-window">
-          <div class="landing__demo-head">
-            <span class="landing__dot"></span>
-            <span class="landing__dot"></span>
-            <span class="landing__dot"></span>
-            <div class="landing__demo-title">AI Daily Pipeline</div>
+          <div class="landing__demo-head surface-strip">
+            <div class="landing__demo-head-main">
+              <span class="landing__dot"></span>
+              <span class="landing__dot"></span>
+              <span class="landing__dot"></span>
+              <div class="landing__demo-title">AI Daily Pipeline</div>
+            </div>
+            <div class="landing__demo-head-stats">
+              <div class="metric-inline">
+                <span>Active repos</span>
+                <strong>12</strong>
+              </div>
+              <div class="metric-inline">
+                <span>Generated today</span>
+                <strong>14</strong>
+              </div>
+            </div>
           </div>
 
           <div class="landing__demo-flow">
@@ -88,6 +108,14 @@
                 <span>机器人 + 文档双通道同步</span>
               </div>
             </div>
+          </div>
+
+          <div class="landing__demo-footer">
+            <div class="landing__demo-log">
+              <span class="landing__demo-log-label">最新事件</span>
+              <strong>daily-report-web 已完成日报推送与文档同步</strong>
+            </div>
+            <div class="landing__demo-badge">Streaming Ready</div>
           </div>
         </div>
       </div>
@@ -136,14 +164,14 @@ const router = useRouter()
 <style scoped lang="less">
 .landing {
   min-height: 100vh;
-  padding-bottom: 40px;
+  padding-bottom: 56px;
 
   &__header {
     display: flex;
     justify-content: space-between;
     gap: 16px;
     align-items: center;
-    padding-top: 16px;
+    padding-top: 18px;
   }
 
   &__header-actions {
@@ -154,8 +182,9 @@ const router = useRouter()
   &__hero {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: 22px;
-    padding-top: 42px;
+    gap: 24px;
+    align-items: stretch;
+    padding-top: 54px;
   }
 
   &__title {
@@ -174,6 +203,10 @@ const router = useRouter()
     line-height: 1.9;
   }
 
+  &__highlights {
+    margin-top: 26px;
+  }
+
   &__cta {
     display: flex;
     gap: 14px;
@@ -188,19 +221,26 @@ const router = useRouter()
   }
 
   &__metric {
-    padding: 18px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
 
     strong {
-      font-size: 24px;
+      font-size: 28px;
+      line-height: 1;
     }
 
     span {
       color: var(--text-3);
       line-height: 1.6;
       font-size: 13px;
+    }
+
+    small {
+      color: var(--text-4);
+      line-height: 1.6;
+      font-size: 12px;
     }
   }
 
@@ -227,20 +267,33 @@ const router = useRouter()
     min-height: 100%;
     border-radius: 24px;
     padding: 20px;
-    background: rgba(5, 9, 21, 0.56);
+    background: rgba(5, 9, 21, 0.42);
     border: 1px solid rgba(151, 196, 255, 0.12);
   }
 
   &__demo-head {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 18px;
+  }
+
+  &__demo-head-main {
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
 
+  &__demo-head-stats {
+    display: flex;
+    gap: 22px;
+  }
+
   &__demo-title {
-    margin-left: auto;
     color: var(--text-3);
     font-size: 12px;
+    margin-left: 6px;
   }
 
   &__dot {
@@ -287,11 +340,56 @@ const router = useRouter()
     }
   }
 
+  &__demo-footer {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  &__demo-log {
+    display: grid;
+    gap: 6px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    flex: 1;
+    min-width: 240px;
+
+    strong {
+      font-size: 14px;
+    }
+  }
+
+  &__demo-log-label {
+    color: var(--text-4);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__demo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(118, 242, 198, 0.12);
+    color: var(--brand-1);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
   &__features {
-    margin-top: 22px;
+    margin-top: 26px;
   }
 
   &__feature {
+    min-height: 100%;
+
     h3 {
       margin: 18px 0 0;
       font-size: 20px;
@@ -323,6 +421,11 @@ const router = useRouter()
     &__metrics {
       grid-template-columns: 1fr;
     }
+
+    &__demo-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 }
 
@@ -335,6 +438,11 @@ const router = useRouter()
 
     &__cta {
       flex-direction: column;
+    }
+
+    &__demo-head-stats {
+      width: 100%;
+      justify-content: space-between;
     }
   }
 }

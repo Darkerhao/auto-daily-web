@@ -12,12 +12,30 @@
       </n-space>
     </SectionHeader>
 
+    <div class="report-grid__toolbar surface-strip">
+      <div class="metric-inline">
+        <span>当前仓库</span>
+        <strong>{{ currentRepoName }}</strong>
+      </div>
+      <div class="info-pills">
+        <span class="info-pill">已选 Commit {{ selectedCommitIds.length }}</span>
+        <span class="info-pill">待分析文件 {{ selectedFiles.length }}</span>
+        <span class="info-pill">输出风格 {{ selectedPromptName }}</span>
+      </div>
+    </div>
+
     <div class="report-grid">
       <div class="report-grid__left">
         <CommitList v-model:selected-ids="selectedCommitIds" :commits="commits" />
 
         <div class="glass-panel section-card">
-          <h3 class="panel-title">Diff 文件树</h3>
+          <div class="report-grid__section-head">
+            <div>
+              <h3 class="panel-title">Diff 文件树</h3>
+              <div class="panel-subtitle">优先查看本次选中提交关联的文件变更，再决定是否重新生成日报。</div>
+            </div>
+            <div class="info-pill mono">{{ selectedFiles.length }} files</div>
+          </div>
           <div class="report-grid__file-list">
             <button
               v-for="file in selectedFiles"
@@ -154,6 +172,12 @@ const repoOptions = computed(() =>
 const commits = computed(() => reportStore.commits)
 const prompts = computed(() => reportStore.prompts)
 const currentReport = computed(() => reportStore.currentReport ?? reportStore.reports[0] ?? null)
+const currentRepoName = computed(
+  () => repositoryStore.repositories.find((item) => item.id === selectedRepoId.value)?.name ?? '未选择仓库',
+)
+const selectedPromptName = computed(
+  () => prompts.value.find((item) => item.id === selectedPromptId.value)?.name ?? '未选择风格',
+)
 const streamPanelMode = computed<'live' | 'recent' | 'summary'>(() => {
   if (generating.value || reportStore.streamContent.trim().length > 0) {
     return 'live'
@@ -340,6 +364,12 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .report-grid {
+  &__toolbar {
+    margin-bottom: 18px;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+  }
+
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: 16px;
@@ -348,6 +378,14 @@ onMounted(async () => {
   &__right {
     display: grid;
     gap: 16px;
+    align-content: start;
+  }
+
+  &__section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
   }
 
   &__history-filters {
@@ -363,6 +401,7 @@ onMounted(async () => {
     gap: 10px;
     max-height: 320px;
     overflow: auto;
+    padding-right: 4px;
   }
 
   &__history-item {
@@ -377,10 +416,20 @@ onMounted(async () => {
     background: rgba(255, 255, 255, 0.03);
     cursor: pointer;
     text-align: left;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(109, 177, 255, 0.14);
+      background: rgba(109, 177, 255, 0.06);
+    }
 
     &.is-active {
-      border-color: rgba(122, 162, 255, 0.24);
-      background: rgba(122, 162, 255, 0.08);
+      border-color: rgba(109, 177, 255, 0.24);
+      background: rgba(109, 177, 255, 0.08);
       color: var(--text-1);
     }
   }
@@ -395,6 +444,9 @@ onMounted(async () => {
     margin-top: 18px;
     display: grid;
     gap: 10px;
+    max-height: 440px;
+    overflow: auto;
+    padding-right: 4px;
   }
 
   &__file {
@@ -410,10 +462,20 @@ onMounted(async () => {
     background: rgba(255, 255, 255, 0.02);
     cursor: pointer;
     text-align: left;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(109, 177, 255, 0.14);
+      background: rgba(109, 177, 255, 0.06);
+    }
 
     &.is-active {
-      border-color: rgba(122, 162, 255, 0.24);
-      background: rgba(122, 162, 255, 0.08);
+      border-color: rgba(109, 177, 255, 0.24);
+      background: rgba(109, 177, 255, 0.08);
       color: var(--text-1);
     }
   }
@@ -429,6 +491,10 @@ onMounted(async () => {
 
 @media (max-width: 1120px) {
   .report-grid {
+    &__toolbar {
+      grid-template-columns: 1fr;
+    }
+
     grid-template-columns: 1fr;
   }
 }
@@ -440,6 +506,15 @@ onMounted(async () => {
     }
 
     &__actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    &__section-head {
+      flex-direction: column;
+    }
+
+    &__file {
       flex-direction: column;
       align-items: flex-start;
     }

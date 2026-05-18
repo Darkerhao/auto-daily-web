@@ -26,6 +26,7 @@ const props = defineProps<{
 
 const chartRef = ref<HTMLDivElement | null>(null)
 let chart: ECharts | null = null
+let resizeObserver: ResizeObserver | null = null
 
 function renderChart() {
   if (!chartRef.value) {
@@ -82,7 +83,25 @@ function renderChart() {
 onMounted(renderChart)
 watch(() => props.data, renderChart, { deep: true })
 
+onMounted(() => {
+  if (!chartRef.value) {
+    return
+  }
+
+  resizeObserver = new ResizeObserver(() => {
+    chart?.resize()
+  })
+  resizeObserver.observe(chartRef.value)
+  window.addEventListener('resize', handleWindowResize)
+})
+
+function handleWindowResize() {
+  chart?.resize()
+}
+
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  window.removeEventListener('resize', handleWindowResize)
   chart?.dispose()
 })
 </script>

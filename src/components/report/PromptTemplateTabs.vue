@@ -44,7 +44,16 @@ const emit = defineEmits<{
     align-items: start;
     padding: 14px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      border-color: rgba(109, 177, 255, 0.16);
+      background: rgba(109, 177, 255, 0.05);
+    }
   }
 
   &__name {

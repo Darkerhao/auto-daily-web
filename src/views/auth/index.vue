@@ -4,15 +4,32 @@
       <div class="auth-page__hero">
         <AppLogo />
         <h1>接入你的研发工作流</h1>
-        <p>邮箱登录为当前演示入口，GitHub / GitLab 登录已预留。</p>
+        <p>把 Commit、Diff、日报生成与飞书投递串成一条真正可运营的研发日报链路。</p>
         <div class="auth-page__badges">
           <n-tag round :bordered="false">GitHub OAuth Reserved</n-tag>
           <n-tag round :bordered="false">GitLab OAuth Reserved</n-tag>
         </div>
+        <div class="auth-page__insights surface-strip">
+          <div class="metric-inline">
+            <span>多仓库聚合</span>
+            <strong>12 repos</strong>
+          </div>
+          <div class="metric-inline">
+            <span>今日投递</span>
+            <strong>14 reports</strong>
+          </div>
+          <div class="metric-inline">
+            <span>稳定性</span>
+            <strong>98.4%</strong>
+          </div>
+        </div>
       </div>
 
       <div class="auth-page__form glass-panel">
-        <h2>登录工作台</h2>
+        <div class="auth-page__form-head">
+          <h2>登录工作台</h2>
+          <span>Demo Access</span>
+        </div>
         <n-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleLogin">
           <n-form-item path="email" label="邮箱">
             <n-input v-model:value="form.email" placeholder="name@company.com" />
@@ -89,13 +106,13 @@ async function handleLogin() {
     width: min(1100px, 100%);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
-    gap: 18px;
-    padding: 18px;
+    gap: 20px;
+    padding: 20px;
   }
 
   &__hero,
   &__form {
-    padding: 28px;
+    padding: 30px;
   }
 
   &__hero {
@@ -114,7 +131,7 @@ async function handleLogin() {
       margin-top: 18px;
       color: var(--text-2);
       line-height: 1.8;
-      max-width: 520px;
+      max-width: 540px;
     }
   }
 
@@ -125,10 +142,39 @@ async function handleLogin() {
     margin-top: 20px;
   }
 
+  &__insights {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 28px;
+  }
+
   &__form {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 100%), var(--panel-bg);
+
     h2 {
-      margin: 0 0 22px;
+      margin: 0;
       font-size: 26px;
+    }
+  }
+
+  &__form-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 22px;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: rgba(109, 177, 255, 0.1);
+      color: var(--brand-2);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
   }
 
@@ -142,6 +188,10 @@ async function handleLogin() {
 @media (max-width: 960px) {
   .auth-page {
     &__panel {
+      grid-template-columns: 1fr;
+    }
+
+    &__insights {
       grid-template-columns: 1fr;
     }
   }

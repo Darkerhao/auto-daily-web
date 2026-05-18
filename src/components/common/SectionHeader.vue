@@ -5,7 +5,9 @@
       <h1 class="page-heading__title">{{ title }}</h1>
       <p v-if="description" class="page-heading__desc">{{ description }}</p>
     </div>
-    <slot />
+    <div v-if="$slots.default" class="page-heading__actions">
+      <slot />
+    </div>
   </div>
 </template>
 

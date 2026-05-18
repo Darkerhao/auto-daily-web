@@ -1,7 +1,10 @@
 <template>
   <div class="activity-feed glass-panel section-card">
     <div class="activity-feed__header">
-      <h3 class="panel-title">实时活动流</h3>
+      <div>
+        <h3 class="panel-title">实时活动流</h3>
+        <div class="panel-subtitle">持续反馈仓库同步、日报生成与投递状态。</div>
+      </div>
       <n-tag :type="connected ? 'success' : 'warning'" round :bordered="false">
         {{ connected ? 'WebSocket Online' : 'Reconnecting' }}
       </n-tag>
@@ -46,8 +49,9 @@ const { connected, messages } = useWorkspaceSocket()
     grid-template-columns: 12px minmax(0, 1fr) auto;
     gap: 12px;
     align-items: start;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(151, 196, 255, 0.08);
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
   }
 
   &__dot {
@@ -56,7 +60,7 @@ const { connected, messages } = useWorkspaceSocket()
     margin-top: 7px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
-    box-shadow: 0 0 16px rgba(122, 162, 255, 0.4);
+    box-shadow: 0 0 16px rgba(109, 177, 255, 0.4);
   }
 
   &__title {
@@ -72,6 +76,18 @@ const { connected, messages } = useWorkspaceSocket()
   &__desc {
     margin-top: 6px;
     line-height: 1.6;
+  }
+}
+
+@media (max-width: 768px) {
+  .activity-feed {
+    &__item {
+      grid-template-columns: 12px minmax(0, 1fr);
+    }
+
+    &__time {
+      grid-column: 2;
+    }
   }
 }
 </style>

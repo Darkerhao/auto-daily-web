@@ -14,6 +14,17 @@
       <MetricCard v-for="item in metrics" :key="item.key" :item="item" />
     </div>
 
+    <div class="dashboard-grid__overview surface-strip">
+      <div class="metric-inline">
+        <span>今日核心链路</span>
+        <strong>仓库同步 → AI 归纳 → 飞书投递</strong>
+      </div>
+      <div class="info-pills">
+        <span class="info-pill">日报生成工作台已接入流式输出</span>
+        <span class="info-pill">支持管理视角与专业研发双模板</span>
+      </div>
+    </div>
+
     <div class="grid-2 dashboard-grid">
       <div class="dashboard-grid__main">
         <div class="glass-panel section-card">
@@ -144,7 +155,13 @@ onMounted(() => {
 
 <style scoped lang="less">
 .dashboard-grid {
-  margin-top: 16px;
+  margin-top: 18px;
+
+  &__overview {
+    margin: 18px 0 0;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+  }
 
   &__main,
   &__side {
@@ -184,8 +201,17 @@ onMounted(() => {
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(151, 196, 255, 0.08);
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+@media (max-width: 1120px) {
+  .dashboard-grid {
+    &__overview {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

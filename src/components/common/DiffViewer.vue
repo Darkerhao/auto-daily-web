@@ -7,6 +7,7 @@
           {{ file.language }} · {{ file.status ?? 'modified' }} · +{{ file.additions }} / -{{ file.deletions }}
         </div>
       </div>
+      <div class="info-pill mono">{{ file.patch.length }} lines</div>
     </div>
 
     <div class="diff-viewer__code mono">
@@ -36,12 +37,21 @@ defineProps<{
 
 <style scoped lang="less">
 .diff-viewer {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
   &__code {
     margin-top: 18px;
     display: grid;
     gap: 8px;
     font-size: 13px;
     line-height: 1.7;
+    max-height: 560px;
+    overflow: auto;
   }
 
   &__line {
@@ -53,7 +63,7 @@ defineProps<{
 
     &--add {
       color: #8df7c0;
-      background: rgba(91, 231, 169, 0.08);
+      background: rgba(84, 227, 160, 0.08);
     }
 
     &--remove {
@@ -63,7 +73,7 @@ defineProps<{
 
     &--meta {
       color: var(--brand-3);
-      background: rgba(109, 214, 255, 0.08);
+      background: rgba(88, 215, 255, 0.08);
     }
   }
 }

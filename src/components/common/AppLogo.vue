@@ -5,7 +5,7 @@
     </div>
     <div v-if="!collapsed" class="app-logo__text">
       <strong>甲子日报 AI</strong>
-      <span>Git Diff to Feishu</span>
+      <span>Engineering Daily Workspace</span>
     </div>
   </div>
 </template>
@@ -25,33 +25,35 @@ defineProps<{
   gap: 12px;
 
   &__mark {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
+    border-radius: 16px;
     color: #081321;
-    background:
-      radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.84), transparent 32%),
-      linear-gradient(135deg, var(--brand-1), var(--brand-2));
-    box-shadow: 0 12px 32px rgba(109, 214, 255, 0.28);
+    background: var(--brand-gradient);
+    box-shadow:
+      0 14px 34px rgba(88, 215, 255, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   &__text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 
     strong {
       font-size: 15px;
       line-height: 1.1;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
 
     span {
-      color: var(--text-3);
-      font-size: 12px;
+      color: var(--text-4);
+      font-size: 11px;
       line-height: 1.2;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
   }
 }

@@ -1,10 +1,11 @@
 <template>
   <div class="metric-card glass-panel section-card">
+    <div class="metric-card__bar"></div>
     <div class="metric-card__label">{{ item.label }}</div>
     <div class="metric-card__value">{{ item.value }}</div>
     <div class="metric-card__footer">
       <span :class="['metric-card__trend', `metric-card__trend--${item.status}`]">{{ item.trend }}</span>
-      <span class="metric-card__hint">vs yesterday</span>
+      <span class="metric-card__hint">较昨日</span>
     </div>
   </div>
 </template>
@@ -22,24 +23,28 @@ defineProps<{
   position: relative;
   overflow: hidden;
 
-  &::after {
-    content: '';
-    position: absolute;
-    inset: auto -20% -40% auto;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(122, 162, 255, 0.18), transparent 70%);
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-color-strong);
+  }
+
+  &__bar {
+    width: 56px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--brand-gradient);
+    box-shadow: 0 8px 18px rgba(109, 177, 255, 0.3);
   }
 
   &__label {
+    margin-top: 16px;
     color: var(--text-3);
     font-size: 13px;
   }
 
   &__value {
     margin-top: 14px;
-    font-size: 34px;
+    font-size: 36px;
     font-weight: 700;
     letter-spacing: -0.04em;
   }
@@ -51,6 +56,7 @@ defineProps<{
     align-items: center;
     gap: 8px;
     font-size: 13px;
+    flex-wrap: wrap;
   }
 
   &__trend {
@@ -61,12 +67,12 @@ defineProps<{
 
     &--brand {
       color: var(--brand-2);
-      background: rgba(122, 162, 255, 0.12);
+      background: rgba(109, 177, 255, 0.12);
     }
 
     &--success {
       color: var(--success);
-      background: rgba(91, 231, 169, 0.12);
+      background: rgba(84, 227, 160, 0.12);
     }
 
     &--warning {

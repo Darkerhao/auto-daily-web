@@ -6,6 +6,21 @@
       description="配置 OpenAI、DeepSeek、Claude 或自定义模型服务，控制流式输出、温度和默认日报风格。"
     />
 
+    <div class="settings__summary surface-strip">
+      <div class="metric-inline">
+        <span>当前模型</span>
+        <strong>{{ form?.modelName || '未加载' }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>默认风格</span>
+        <strong>{{ defaultStyleLabel }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>流式输出</span>
+        <strong>{{ form?.enableStreaming ? '已启用' : '已关闭' }}</strong>
+      </div>
+    </div>
+
     <div class="grid-2">
       <div class="settings__stack">
         <div class="glass-panel section-card">
@@ -91,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import type { SelectOption } from 'naive-ui'
 import { useMessage } from 'naive-ui'
 import SectionHeader from '@/components/common/SectionHeader.vue'
@@ -126,6 +141,9 @@ const environmentOptions: SelectOption[] = [
   { label: 'Staging', value: 'staging' },
   { label: 'Production', value: 'production' },
 ]
+const defaultStyleLabel = computed(
+  () => styleOptions.find((item) => item.value === form.value?.defaultStyle)?.label ?? '未设置',
+)
 
 async function handleSave() {
   if (!form.value) {
@@ -148,6 +166,11 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .settings {
+  &__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+  }
+
   &__stack {
     display: grid;
     gap: 16px;
@@ -179,6 +202,14 @@ onMounted(async () => {
       margin-top: 10px;
       color: var(--text-3);
       line-height: 1.7;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .settings {
+    &__summary {
+      grid-template-columns: 1fr;
     }
   }
 }

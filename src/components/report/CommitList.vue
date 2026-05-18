@@ -1,8 +1,11 @@
 <template>
   <div class="commit-list glass-panel section-card">
     <div class="commit-list__header">
-      <h3 class="panel-title">Commit 列表</h3>
-      <div class="panel-subtitle">{{ commits.length }} 条提交已聚合</div>
+      <div>
+        <h3 class="panel-title">Commit 列表</h3>
+        <div class="panel-subtitle">{{ commits.length }} 条提交已聚合，可直接勾选进入日报生成。</div>
+      </div>
+      <div class="info-pill mono">{{ selectedIds.length }}/{{ commits.length }}</div>
     </div>
 
     <n-checkbox-group :value="selectedIds" @update:value="handleSelectionChange">
@@ -15,6 +18,7 @@
               <span class="commit-list__time">{{ item.time }}</span>
             </div>
             <div class="commit-list__message">{{ item.message }}</div>
+            <div class="commit-list__meta">{{ item.author }} · {{ item.branch }}</div>
             <div class="commit-list__modules">
               <n-tag v-for="module in item.modules" :key="module" size="small" round :bordered="false">
                 {{ module }}
@@ -49,10 +53,20 @@ function handleSelectionChange(value: Array<string | number>) {
 
 <style scoped lang="less">
 .commit-list {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
   &__items {
     margin-top: 18px;
     display: grid;
     gap: 12px;
+    max-height: 360px;
+    overflow: auto;
+    padding-right: 4px;
   }
 
   &__item {
@@ -62,7 +76,18 @@ function handleSelectionChange(value: Array<string | number>) {
     align-items: start;
     padding: 14px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: rgba(109, 177, 255, 0.16);
+      background: rgba(109, 177, 255, 0.06);
+    }
   }
 
   &__top {
@@ -71,12 +96,19 @@ function handleSelectionChange(value: Array<string | number>) {
     gap: 12px;
     color: var(--text-3);
     font-size: 13px;
+    flex-wrap: wrap;
   }
 
   &__message {
     margin-top: 8px;
     line-height: 1.6;
     font-weight: 600;
+  }
+
+  &__meta {
+    margin-top: 8px;
+    color: var(--text-4);
+    font-size: 12px;
   }
 
   &__modules {
@@ -88,6 +120,15 @@ function handleSelectionChange(value: Array<string | number>) {
 
   &__time {
     color: var(--text-3);
+  }
+}
+
+@media (max-width: 768px) {
+  .commit-list {
+    &__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 }
 </style>

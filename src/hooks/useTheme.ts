@@ -4,12 +4,12 @@ import { useAppStore } from '@/stores/app'
 
 const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#7aa2ff',
-    primaryColorHover: '#8cb0ff',
-    primaryColorPressed: '#6b95fb',
-    borderRadius: '18px',
+    primaryColor: '#6db1ff',
+    primaryColorHover: '#88c2ff',
+    primaryColorPressed: '#5898f2',
+    borderRadius: '20px',
     borderRadiusSmall: '14px',
-    successColor: '#5be7a9',
+    successColor: '#54e3a0',
     warningColor: '#ffcf70',
     errorColor: '#ff7d90',
     fontFamily:
@@ -18,15 +18,15 @@ const themeOverrides: GlobalThemeOverrides = {
   },
   Card: {
     color: 'transparent',
-    borderRadius: '24px',
+    borderRadius: '28px',
   },
   Input: {
-    borderHover: '1px solid rgba(122, 162, 255, 0.35)',
-    boxShadowFocus: '0 0 0 2px rgba(122, 162, 255, 0.18)',
-    color: 'rgba(8, 14, 27, 0.08)',
+    borderHover: '1px solid rgba(109, 177, 255, 0.4)',
+    boxShadowFocus: '0 0 0 3px rgba(109, 177, 255, 0.16)',
+    color: 'var(--bg-muted)',
   },
   DataTable: {
-    thColor: 'rgba(255, 255, 255, 0.02)',
+    thColor: 'rgba(109, 177, 255, 0.06)',
     tdColor: 'transparent',
   },
 }

@@ -3,96 +3,48 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { createDiscreteApi } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
 import { usePermission } from '@/hooks/usePermission'
+import type { AppRoute } from './routes'
+import { appRoutes, workspaceChildren } from './routes'
 
 const { message } = createDiscreteApi(['message'])
 
+const workspaceRoot = appRoutes.find((item) => item.name === 'workspace')
+const notFoundRoute = appRoutes.find((item) => item.name === 'not-found')
+const staticRoutes = appRoutes.filter((item) => item.name !== 'workspace' && item.name !== 'not-found')
+
+if (!workspaceRoot || !notFoundRoute) {
+  throw new Error('路由配置缺失工作台或兜底页')
+}
+
+function toRouteRecord(route: AppRoute): RouteRecordRaw {
+  const record: RouteRecordRaw = {
+    path: route.path,
+    name: route.name,
+    component: route.component,
+  }
+
+  if (route.meta) {
+    record.meta = route.meta
+  }
+
+  return record
+}
+
 const routes: RouteRecordRaw[] = [
+  ...staticRoutes.map(toRouteRecord),
   {
-    path: '/',
-    name: 'landing',
-    component: () => import('@/views/landing/index.vue'),
-    meta: {
-      title: '甲子日报 AI',
-    },
-  },
-  {
-    path: '/login',
-    name: 'login',
-    component: () => import('@/views/auth/index.vue'),
-    meta: {
-      title: '登录',
-    },
-  },
-  {
-    path: '/workspace',
-    component: () => import('@/layouts/AppLayout.vue'),
-    meta: {
-      title: '工作台',
-      requiresAuth: true,
-    },
+    path: workspaceRoot.path,
+    name: workspaceRoot.name,
+    component: workspaceRoot.component,
     redirect: '/workspace/dashboard',
-    children: [
-      {
-        path: 'dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/dashboard/index.vue'),
-        meta: {
-          title: '控制台',
-          requiresAuth: true,
-          permission: 'dashboard:view',
-        },
-      },
-      {
-        path: 'repositories',
-        name: 'repositories',
-        component: () => import('@/views/repository/index.vue'),
-        meta: {
-          title: '仓库管理',
-          requiresAuth: true,
-          permission: 'repository:manage',
-        },
-      },
-      {
-        path: 'reports',
-        name: 'reports',
-        component: () => import('@/views/report/index.vue'),
-        meta: {
-          title: '日报生成',
-          requiresAuth: true,
-          permission: 'report:generate',
-        },
-      },
-      {
-        path: 'feishu',
-        name: 'feishu',
-        component: () => import('@/views/feishu/index.vue'),
-        meta: {
-          title: '飞书配置',
-          requiresAuth: true,
-          permission: 'feishu:manage',
-        },
-      },
-      {
-        path: 'settings',
-        name: 'settings',
-        component: () => import('@/views/settings/index.vue'),
-        meta: {
-          title: '设置中心',
-          requiresAuth: true,
-          permission: 'settings:manage',
-        },
-      },
-    ],
+    children: workspaceChildren.map(toRouteRecord),
   },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: () => import('@/views/landing/index.vue'),
-    meta: {
-      title: '首页',
-    },
-  },
+  toRouteRecord(notFoundRoute),
 ]
+
+if (workspaceRoot.meta) {
+  routes[staticRoutes.length]!.meta = workspaceRoot.meta
+}
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -100,7 +52,7 @@ export const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = `${to.meta.title ?? '甲子日报 AI'} - 甲子日报 AI`
+  document.title = `${to.meta.title ?? '甲子日报 AI'} · 甲子日报 AI`
 
   const authStore = useAuthStore()
   const { hasPermission } = usePermission()

@@ -8,6 +8,21 @@
       <n-button type="primary" @click="openCreateModal">新增仓库</n-button>
     </SectionHeader>
 
+    <div class="repository__summary surface-strip">
+      <div class="metric-inline">
+        <span>已接入仓库</span>
+        <strong>{{ repositories.length }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>运行中</span>
+        <strong>{{ activeRepositoryCount }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>今日提交总量</span>
+        <strong>{{ totalCommitCountToday }}</strong>
+      </div>
+    </div>
+
     <div class="glass-panel section-card">
       <n-data-table :columns="columns" :data="repositories" :bordered="false" />
     </div>
@@ -108,6 +123,10 @@ const form = reactive<RepositoryForm>(emptyForm())
 
 const repositories = computed(() => repositoryStore.repositories)
 const connectionResult = computed(() => repositoryStore.lastConnectionResult)
+const activeRepositoryCount = computed(() => repositories.value.filter((item) => item.enabled).length)
+const totalCommitCountToday = computed(() =>
+  repositories.value.reduce((sum, item) => sum + item.commitCountToday, 0),
+)
 
 const columns: DataTableColumns<RepositoryItem> = [
   { title: '仓库', key: 'name' },
@@ -214,6 +233,11 @@ onMounted(() => {
 
 <style scoped lang="less">
 .repository {
+  &__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+  }
+
   &__connection {
     margin-top: 20px;
   }
@@ -232,5 +256,13 @@ onMounted(() => {
 
 :deep(.repo-modal) {
   width: min(920px, calc(100vw - 24px));
+}
+
+@media (max-width: 768px) {
+  .repository {
+    &__summary {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 </style>

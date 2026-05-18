@@ -4,8 +4,8 @@ import type { ThemeMode, WorkspaceProfile } from '@/types/common'
 import { readStorage, storageKeys, writeStorage } from '@/utils/storage'
 
 const defaultWorkspaceProfile: WorkspaceProfile = {
-  workspaceName: '甲子日报 AI SaaS',
-  teamName: '研发效能组',
+  workspaceName: '甲子研发日报中心',
+  teamName: '前端平台组',
   environment: 'demo',
 }
 

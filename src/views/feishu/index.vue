@@ -6,6 +6,21 @@
       description="支持 Webhook、机器人密钥、飞书文档与自动发送时间配置，适配企业内日报同步链路。"
     />
 
+    <div class="feishu__summary surface-strip">
+      <div class="metric-inline">
+        <span>机器人推送</span>
+        <strong>{{ form?.enableRobot ? '已启用' : '已停用' }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>文档同步</span>
+        <strong>{{ form?.enableDocSync ? '已启用' : '已停用' }}</strong>
+      </div>
+      <div class="metric-inline">
+        <span>自动发送</span>
+        <strong>{{ form?.autoSendTime || '未设置' }}</strong>
+      </div>
+    </div>
+
     <div class="grid-2">
       <div class="glass-panel section-card">
         <n-form v-if="form" :model="form" label-placement="top">
@@ -108,6 +123,11 @@ onMounted(async () => {
 
 <style scoped lang="less">
 .feishu {
+  &__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+  }
+
   &__switches {
     display: grid;
     gap: 18px;
@@ -127,6 +147,14 @@ onMounted(async () => {
     padding: 14px 16px;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+@media (max-width: 768px) {
+  .feishu {
+    &__summary {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>
