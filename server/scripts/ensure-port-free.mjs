@@ -1,4 +1,10 @@
 import net from 'node:net'
+import path from 'node:path'
+import { config } from 'dotenv'
+
+config({
+  path: path.resolve(process.cwd(), '.env'),
+})
 
 const port = Number(process.argv[2] ?? process.env.PORT ?? 3000)
 
