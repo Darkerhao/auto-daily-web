@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { ok } from '../../common/types/api.js'
 import { createAppRepository } from '../../database/repositories/app.repository.js'
 import { repositorySchema } from './schemas/repository.schema.js'
-import { syncRepositoryCommits } from '../git-sync/git-sync.service.js'
+import { fetchRepositoryBranches, syncRepositoryCommits } from '../git-sync/git-sync.service.js'
 
 export function createRepositoryModule() {
   const router = Router()
@@ -70,6 +70,25 @@ export function createRepositoryModule() {
         lastCommitHash: '4c9a2d91',
         message: '仓库连接测试通过，分支与访问令牌校验成功。',
       }),
+    )
+  })
+
+  router.post('/branches', async (req, res) => {
+    const payload = repositorySchema.pick({
+      provider: true,
+      url: true,
+      token: true,
+    }).parse(req.body)
+
+    const branches = await fetchRepositoryBranches(payload)
+
+    res.json(
+      ok(
+        branches.map((branch) => ({
+          label: branch,
+          value: branch,
+        })),
+      ),
     )
   })
 

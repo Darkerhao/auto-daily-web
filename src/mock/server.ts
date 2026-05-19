@@ -9,6 +9,7 @@ import type {
   PromptPreset,
 } from '@/types/report'
 import type {
+  RepositoryBranchOption,
   RepositoryConnectionResult,
   RepositoryForm,
   RepositoryItem,
@@ -91,6 +92,45 @@ export async function testRepositoryConnection(
     lastCommitHash: '4c9a2d91',
     message: `${payload.provider.toUpperCase()} 仓库连通，分支与访问令牌校验通过。`,
   })
+}
+
+function guessBranchesByUrl(url: string): string[] {
+  const normalized = url.toLowerCase()
+
+  if (normalized.includes('daily-report-web')) {
+    return ['main', 'develop', 'release', 'feature/report-stream']
+  }
+
+  if (normalized.includes('report-worker')) {
+    return ['release', 'main', 'hotfix/queue', 'feature/scheduler']
+  }
+
+  if (normalized.includes('outsourcing-delivery')) {
+    return ['master', 'test', 'release']
+  }
+
+  if (normalized.includes('github.com')) {
+    return ['main', 'develop', 'release']
+  }
+
+  if (normalized.includes('gitlab')) {
+    return ['main', 'release', 'staging']
+  }
+
+  if (normalized.includes('gitee')) {
+    return ['master', 'develop', 'release']
+  }
+
+  return ['main', 'develop']
+}
+
+export async function getRepositoryBranches(payload: Pick<RepositoryForm, 'provider' | 'url' | 'token'>): Promise<RepositoryBranchOption[]> {
+  const branches = guessBranchesByUrl(payload.url).map((branch) => ({
+    label: branch,
+    value: branch,
+  }))
+
+  return wait(branches)
 }
 
 export async function getCommits(repoId?: string): Promise<CommitItem[]> {

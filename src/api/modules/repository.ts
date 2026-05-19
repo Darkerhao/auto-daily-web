@@ -1,5 +1,6 @@
 import { request } from '../request'
 import type {
+  RepositoryBranchOption,
   RepositoryConnectionResult,
   RepositoryForm,
   RepositoryItem,
@@ -17,6 +18,9 @@ export const repositoryApi = {
   },
   test(payload: RepositoryForm) {
     return request.post<RepositoryConnectionResult>('/repository/test', payload)
+  },
+  fetchBranches(payload: Pick<RepositoryForm, 'provider' | 'url' | 'token'>) {
+    return request.post<RepositoryBranchOption[]>('/repository/branches', payload)
   },
   sync(repoId: string) {
     return request.post<{ repoId: string; syncedCount: number; latestCommit: string; message: string }>(

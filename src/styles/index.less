@@ -75,6 +75,18 @@ textarea {
   font: inherit;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-1);
+  box-shadow: 0 0 0 1000px var(--bg-muted) inset;
+  caret-color: var(--text-1);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 button {
   border: 0;
 }
@@ -98,6 +110,68 @@ button {
   border: 2px solid transparent;
   background: rgba(143, 173, 228, 0.28);
   background-clip: content-box;
+}
+
+.n-modal-mask {
+  background: var(--overlay-mask) !important;
+  backdrop-filter: blur(18px);
+}
+
+.n-modal.n-card,
+.n-dialog {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+    var(--modal-surface) !important;
+  border: 1px solid var(--modal-border) !important;
+  border-radius: 32px !important;
+  box-shadow: var(--shadow-floating) !important;
+  overflow: hidden;
+}
+
+.n-modal.n-card .n-card-header {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid var(--modal-divider);
+  background:
+    linear-gradient(135deg, rgba(118, 242, 198, 0.08), rgba(109, 177, 255, 0.08) 52%, transparent 100%),
+    transparent;
+}
+
+.n-modal.n-card .n-card-header__main {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.n-modal.n-card .n-card-content {
+  padding: 0 28px 28px;
+}
+
+.n-base-close {
+  background: rgba(109, 177, 255, 0.08);
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    color 0.22s ease;
+}
+
+.n-base-close:hover {
+  transform: rotate(90deg);
+}
+
+.n-popover,
+.n-popconfirm {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+    var(--modal-surface-soft) !important;
+  border: 1px solid var(--modal-border) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--shadow-floating) !important;
+  backdrop-filter: blur(20px);
+}
+
+.n-popover-arrow-wrapper,
+.n-popover-arrow {
+  display: none !important;
 }
 
 .page-shell {

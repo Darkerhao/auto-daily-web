@@ -9,6 +9,14 @@ const themeOverrides: GlobalThemeOverrides = {
     primaryColorPressed: '#5898f2',
     borderRadius: '20px',
     borderRadiusSmall: '14px',
+    bodyColor: 'var(--bg-base)',
+    closeIconColor: 'var(--text-3)',
+    closeIconColorHover: 'var(--text-1)',
+    closeIconColorPressed: 'var(--text-2)',
+    closeColorHover: 'rgba(109, 177, 255, 0.12)',
+    closeColorPressed: 'rgba(109, 177, 255, 0.18)',
+    boxShadow2: 'var(--shadow-floating)',
+    boxShadow3: 'var(--shadow-floating)',
     successColor: '#54e3a0',
     warningColor: '#ffcf70',
     errorColor: '#ff7d90',
@@ -17,13 +25,18 @@ const themeOverrides: GlobalThemeOverrides = {
     fontFamilyMono: '"JetBrains Mono", Consolas, monospace',
   },
   Card: {
-    color: 'transparent',
     borderRadius: '28px',
   },
   Input: {
     borderHover: '1px solid rgba(109, 177, 255, 0.4)',
     boxShadowFocus: '0 0 0 3px rgba(109, 177, 255, 0.16)',
     color: 'var(--bg-muted)',
+  },
+  Popconfirm: {
+    borderRadius: '22px',
+  },
+  Popover: {
+    borderRadius: '22px',
   },
   DataTable: {
     thColor: 'rgba(109, 177, 255, 0.06)',

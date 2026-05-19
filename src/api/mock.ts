@@ -33,6 +33,9 @@ registerMock('DELETE', '/repository/delete', async (config) => {
 registerMock('POST', '/repository/test', async (config) =>
   ok(await mockServer.testRepositoryConnection(getRequestPayload<RepositoryForm>(config))),
 )
+registerMock('POST', '/repository/branches', async (config) =>
+  ok(await mockServer.getRepositoryBranches(getRequestPayload<Pick<RepositoryForm, 'provider' | 'url' | 'token'>>(config))),
+)
 registerMock('GET', '/commit/list', async (config) => ok(await mockServer.getCommits(queryRepoId(config))))
 registerMock('GET', '/report/list', async () => ok(await mockServer.getReports()))
 registerMock('GET', '/report/prompts', async () => ok(await mockServer.getPromptPresets()))

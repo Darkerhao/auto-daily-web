@@ -79,36 +79,78 @@ deploy/
     default.conf
 ```
 
-## 快速开始
+## 启动项目
+
+### 1. 安装依赖
+
+先在项目根目录安装前端依赖，再安装 `server/` 目录下的后端依赖：
+
+```bash
+pnpm install
+pnpm --dir server install
+```
+
+### 2. 准备后端本地环境
+
+前端开发服务器默认会把 `/api` 代理到 `http://localhost:3300`，所以本地联调前，建议先在 `server/` 目录创建一个 `.env` 文件，至少保留下面这几个配置：
+
+```bash
+PORT=3300
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+```
+
+说明：
+
+- 如果不创建 `server/.env`，后端会按默认值监听 `3000`，这时前端可能无法正确代理到后端接口
+- 本地没有 PostgreSQL 也可以先启动后端，只要不要配置 `DATABASE_URL`，服务会自动回退到内存数据
+- 日常联调更推荐开两个终端分别启动前后端，日志更清晰
+
+### 3. 启动后端
+
+在第一个终端执行：
+
+```bash
+pnpm dev:server
+```
+
+### 4. 启动前端
+
+在第二个终端执行：
+
+```bash
+pnpm dev
+```
+
+### 5. 打开项目
+
+浏览器访问：
+
+```text
+http://localhost:5173
+```
+
+### 6. 只启动前端 Mock 模式（可选）
+
+如果你暂时不想启动后端，可以在项目根目录创建 `.env`，写入：
+
+```bash
+VITE_USE_API_MOCK=true
+```
+
+然后执行：
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-后端开发：
+### 7. 初始化 PostgreSQL（可选）
 
-```bash
-pnpm --dir server install
-pnpm dev:server
-```
-
-说明：
-
-- `dev:server` 现在会先检查 `3000` 端口是否空闲
-- 如果端口被其他进程占用，会直接退出并提示，避免前端代理继续报 `502`
-
-如需初始化 PostgreSQL 表结构与种子数据：
+如果你已经准备好了本地数据库，并且在 `server/.env` 中配置了 `DATABASE_URL`，再执行：
 
 ```bash
 pnpm --dir server db:init
-```
-
-前后端联调建议：
-
-```bash
-pnpm dev:server
-pnpm dev
 ```
 
 本地联调当前已验证通过：

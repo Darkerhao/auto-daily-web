@@ -37,3 +37,8 @@ export interface RepositoryConnectionResult {
   lastCommitHash: string
   message: string
 }
+
+export interface RepositoryBranchOption {
+  label: string
+  value: string
+}

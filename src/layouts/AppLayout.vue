@@ -136,13 +136,14 @@ function handleLogout() {
 .workspace-layout {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100vh;
   gap: 18px;
   padding: 18px;
-  align-items: start;
+  overflow: hidden;
 
   &__sidebar {
     width: 300px;
+    min-height: 0;
     transition: width 0.25s ease;
 
     &.is-collapsed {
@@ -151,12 +152,11 @@ function handleLogout() {
   }
 
   &__sidebar-inner {
-    position: sticky;
-    top: 18px;
     display: flex;
     flex-direction: column;
     gap: 22px;
-    min-height: calc(100vh - 36px);
+    height: 100%;
+    min-height: 0;
     padding: 22px 18px 18px;
   }
 
@@ -186,6 +186,7 @@ function handleLogout() {
   &__nav {
     display: grid;
     gap: 10px;
+    min-height: 0;
   }
 
   &__nav-link {
@@ -267,6 +268,11 @@ function handleLogout() {
 
   &__content {
     min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 18px;
+    overflow: hidden;
   }
 
   &__header {
@@ -275,6 +281,7 @@ function handleLogout() {
     gap: 20px;
     align-items: center;
     padding: 20px 24px;
+    flex-shrink: 0;
   }
 
   &__header-left,
@@ -350,14 +357,20 @@ function handleLogout() {
   }
 
   &__body {
-    margin-top: 18px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
   }
 }
 
 @media (max-width: 960px) {
   .workspace-layout {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
     padding: 12px;
+    overflow: visible;
 
     &__sidebar {
       width: 100%;
@@ -365,7 +378,7 @@ function handleLogout() {
 
     &__sidebar-inner {
       min-height: auto;
-      position: static;
+      height: auto;
       gap: 16px;
       padding: 16px;
     }
@@ -395,6 +408,16 @@ function handleLogout() {
 
     &__sidebar-footer-copy {
       display: none;
+    }
+
+    &__content {
+      display: block;
+      overflow: visible;
+    }
+
+    &__body {
+      overflow: visible;
+      padding-right: 0;
     }
   }
 }

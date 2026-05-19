@@ -30,6 +30,10 @@ interface SyncedCommit {
   files: SyncedCommitFile[]
 }
 
+interface RepositoryBranchRef {
+  name: string
+}
+
 interface GitHubCommitListItem {
   sha: string
   commit: {
@@ -65,6 +69,62 @@ function parseGitHubRepo(url: string) {
     owner,
     repo,
   }
+}
+
+function parseGitLabRepo(url: string) {
+  const match = url.match(/gitlab(?:\.[^/]+)?\/([^/]+)\/([^/.]+)(?:\.git)?$/i)
+  const owner = match?.[1]
+  const repo = match?.[2]
+
+  if (!owner || !repo) {
+    return null
+  }
+
+  return {
+    owner,
+    repo,
+  }
+}
+
+function parseGiteeRepo(url: string) {
+  const match = url.match(/gitee\.com\/([^/]+)\/([^/.]+)(?:\.git)?$/i)
+  const owner = match?.[1]
+  const repo = match?.[2]
+
+  if (!owner || !repo) {
+    return null
+  }
+
+  return {
+    owner,
+    repo,
+  }
+}
+
+function createFallbackBranches(repository: Pick<RepositoryLike, 'provider' | 'url'>): string[] {
+  const normalized = repository.url.toLowerCase()
+
+  if (normalized.includes('daily-report-web')) {
+    return ['main', 'develop', 'release', 'feature/report-stream']
+  }
+
+  if (normalized.includes('report-worker')) {
+    return ['release', 'main', 'hotfix/queue', 'feature/scheduler']
+  }
+
+  if (normalized.includes('outsourcing-delivery')) {
+    return ['master', 'test', 'release']
+  }
+
+  if (repository.provider === 'gitee') {
+    return ['master', 'develop', 'release']
+  }
+
+  if (repository.provider === 'gitlab') {
+    return ['main', 'release', 'staging']
+  }
+
+  return ['main', 'develop', 'release']
 }
 
 function inferModules(message: string) {
@@ -163,6 +223,90 @@ async function fetchGitHubCommitDetail(
   }
 
   return (await response.json()) as GitHubCommitDetail
+}
+
+export async function fetchRepositoryBranches(repository: Pick<RepositoryLike, 'provider' | 'url' | 'token'>): Promise<string[]> {
+  if (repository.provider === 'github') {
+    const parsed = parseGitHubRepo(repository.url)
+    if (!parsed) return createFallbackBranches(repository)
+
+    const response = await fetch(
+      `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/branches?per_page=100`,
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          ...(repository.token
+            ? {
+                Authorization: `Bearer ${repository.token}`,
+              }
+            : {}),
+        },
+      },
+    )
+
+    if (!response.ok) {
+      return createFallbackBranches(repository)
+    }
+
+    const payload = (await response.json()) as RepositoryBranchRef[]
+    const branches = payload.map((item) => item.name).filter(Boolean)
+    return branches.length > 0 ? branches : createFallbackBranches(repository)
+  }
+
+  if (repository.provider === 'gitlab') {
+    const parsed = parseGitLabRepo(repository.url)
+    if (!parsed) return createFallbackBranches(repository)
+
+    const project = encodeURIComponent(`${parsed.owner}/${parsed.repo}`)
+    const response = await fetch(
+      `https://gitlab.com/api/v4/projects/${project}/repository/branches?per_page=100`,
+      {
+        headers: {
+          ...(repository.token
+            ? {
+                'PRIVATE-TOKEN': repository.token,
+              }
+            : {}),
+        },
+      },
+    )
+
+    if (!response.ok) {
+      return createFallbackBranches(repository)
+    }
+
+    const payload = (await response.json()) as RepositoryBranchRef[]
+    const branches = payload.map((item) => item.name).filter(Boolean)
+    return branches.length > 0 ? branches : createFallbackBranches(repository)
+  }
+
+  if (repository.provider === 'gitee') {
+    const parsed = parseGiteeRepo(repository.url)
+    if (!parsed) return createFallbackBranches(repository)
+
+    const response = await fetch(
+      `https://gitee.com/api/v5/repos/${parsed.owner}/${parsed.repo}/branches`,
+      {
+        headers: {
+          ...(repository.token
+            ? {
+                Authorization: `token ${repository.token}`,
+              }
+            : {}),
+        },
+      },
+    )
+
+    if (!response.ok) {
+      return createFallbackBranches(repository)
+    }
+
+    const payload = (await response.json()) as RepositoryBranchRef[]
+    const branches = payload.map((item) => item.name).filter(Boolean)
+    return branches.length > 0 ? branches : createFallbackBranches(repository)
+  }
+
+  return createFallbackBranches(repository)
 }
 
 export async function syncRepositoryCommits(repository: RepositoryLike): Promise<SyncedCommit[]> {

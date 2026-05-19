@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { repositoryApi } from '@/api/modules/repository'
 import type {
+  RepositoryBranchOption,
   RepositoryConnectionResult,
   RepositoryForm,
   RepositoryItem,
@@ -10,6 +11,7 @@ import type {
 export const useRepositoryStore = defineStore('repository', () => {
   const repositories = ref<RepositoryItem[]>([])
   const lastConnectionResult = ref<RepositoryConnectionResult | null>(null)
+  const branchOptions = ref<RepositoryBranchOption[]>([])
 
   async function fetchRepositories() {
     repositories.value = await repositoryApi.list()
@@ -38,13 +40,30 @@ export const useRepositoryStore = defineStore('repository', () => {
     return result
   }
 
+  async function fetchBranches(payload: Pick<RepositoryForm, 'provider' | 'url' | 'token'>) {
+    branchOptions.value = await repositoryApi.fetchBranches(payload)
+    return branchOptions.value
+  }
+
+  function clearConnectionResult() {
+    lastConnectionResult.value = null
+  }
+
+  function clearBranchOptions() {
+    branchOptions.value = []
+  }
+
   return {
     repositories,
     lastConnectionResult,
+    branchOptions,
     fetchRepositories,
     saveRepository,
     deleteRepository,
     testConnection,
     syncRepository,
+    fetchBranches,
+    clearConnectionResult,
+    clearBranchOptions,
   }
 })
