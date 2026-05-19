@@ -97,7 +97,7 @@ pnpm --dir server install
 ```bash
 PORT=3300
 NODE_ENV=development
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5180
 ```
 
 说明：
@@ -127,7 +127,7 @@ pnpm dev
 浏览器访问：
 
 ```text
-http://localhost:5173
+http://localhost:5180
 ```
 
 ### 6. 只启动前端 Mock 模式（可选）
@@ -167,7 +167,7 @@ pnpm --dir server db:init
 默认开发地址：
 
 ```text
-http://localhost:5173
+http://localhost:5180
 ```
 
 ## 可用脚本

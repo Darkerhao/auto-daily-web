@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import { ok } from '../../common/types/api.js'
 import { createAppRepository } from '../../database/repositories/app.repository.js'
-import { repositorySchema } from './schemas/repository.schema.js'
-import { fetchRepositoryBranches, syncRepositoryCommits } from '../git-sync/git-sync.service.js'
+import { repositoryConnectionTestSchema, repositorySchema } from './schemas/repository.schema.js'
+import { fetchRepositoryBranches, syncRepositoryCommits, testRepositoryConnection } from '../git-sync/git-sync.service.js'
 
 export function createRepositoryModule() {
   const router = Router()
@@ -47,30 +47,14 @@ export function createRepositoryModule() {
     )
   })
 
-  router.post('/:id/test', (req, res) => {
-    repositorySchema.partial().parse(req.body)
-    res.json(
-      ok({
-        success: true,
-        latency: 182,
-        branchExists: true,
-        lastCommitHash: '4c9a2d91',
-        message: '仓库连接测试通过，分支与访问令牌校验成功。',
-      }),
-    )
+  router.post('/:id/test', async (req, res) => {
+    const payload = repositoryConnectionTestSchema.parse(req.body)
+    res.json(ok(await testRepositoryConnection(payload)))
   })
 
-  router.post('/test', (req, res) => {
-    repositorySchema.partial().parse(req.body)
-    res.json(
-      ok({
-        success: true,
-        latency: 182,
-        branchExists: true,
-        lastCommitHash: '4c9a2d91',
-        message: '仓库连接测试通过，分支与访问令牌校验成功。',
-      }),
-    )
+  router.post('/test', async (req, res) => {
+    const payload = repositoryConnectionTestSchema.parse(req.body)
+    res.json(ok(await testRepositoryConnection(payload)))
   })
 
   router.post('/branches', async (req, res) => {

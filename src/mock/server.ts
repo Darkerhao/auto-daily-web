@@ -85,6 +85,64 @@ export async function removeRepository(id: string) {
 export async function testRepositoryConnection(
   payload: RepositoryForm,
 ): Promise<RepositoryConnectionResult> {
+  const normalizedUrl = payload.url.trim()
+  const branch = payload.branch.trim()
+
+  if (!normalizedUrl) {
+    return wait({
+      success: false,
+      latency: 0,
+      branchExists: false,
+      lastCommitHash: '',
+      message: '请先填写仓库地址，再测试连接。',
+    })
+  }
+
+  if (!branch) {
+    return wait({
+      success: false,
+      latency: 0,
+      branchExists: false,
+      lastCommitHash: '',
+      message: '请先选择或输入要测试的分支。',
+    })
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl)
+    const pathSegments = parsedUrl.pathname.split('/').filter(Boolean)
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol) || pathSegments.length < 2) {
+      return wait({
+        success: false,
+        latency: 0,
+        branchExists: false,
+        lastCommitHash: '',
+        message: '仓库地址格式不正确，请输入完整地址，例如 https://github.com/org/repo。',
+      })
+    }
+  } catch {
+    return wait({
+      success: false,
+      latency: 0,
+      branchExists: false,
+      lastCommitHash: '',
+      message: '仓库地址格式不正确，请输入完整地址，例如 https://github.com/org/repo。',
+    })
+  }
+
+  const branchExists = guessBranchesByUrl(normalizedUrl).includes(branch)
+
+  if (!branchExists) {
+    return wait({
+      success: false,
+      latency: 182,
+      branchExists: false,
+      lastCommitHash: '',
+      message: `仓库地址可解析，但未识别到分支 ${branch}。`,
+    })
+  }
+
   return wait({
     success: true,
     latency: 182,

@@ -135,12 +135,23 @@
                 <n-button
                   secondary
                   :loading="branchLoading"
-                  :disabled="!form.url.trim()"
+                  :disabled="!canReloadBranches"
                   @click="handleReloadBranches"
                 >
                   重新拉取分支
                 </n-button>
               </n-input-group>
+              <div
+                v-if="urlValidationState !== 'idle'"
+                class="repository-modal__field-tip"
+                :class="{ 'is-manual': urlValidationState === 'invalid' }"
+              >
+                <span class="repository-modal__field-badge" :class="`is-${urlValidationState === 'valid' ? 'auto' : 'manual'}`">
+                  {{ urlValidationState === 'valid' ? '地址有效' : '地址异常' }}
+                </span>
+                <span v-if="urlValidationState === 'valid'">仓库地址格式已通过校验，可自动解析与拉取分支</span>
+                <span v-else>{{ urlValidationMessage }}</span>
+              </div>
             </n-form-item>
 
             <div class="grid-3">
@@ -188,13 +199,17 @@
             </div>
 
             <div
-              v-if="branchLoading || branchFetchError || branchOptions.length > 0"
+              v-if="branchHint"
               class="repository-modal__branch-tip"
-              :class="{ 'is-error': branchFetchError }"
+              :class="{ 'is-error': branchHint.tone === 'error' }"
             >
-              <span v-if="branchLoading">正在读取仓库分支列表...</span>
-              <span v-else-if="branchFetchError">{{ branchFetchError }}</span>
-              <span v-else>已自动读取 {{ branchOptions.length }} 个分支，请直接选择。</span>
+              <span
+                class="repository-modal__field-badge"
+                :class="`is-${branchHint.badgeTone}`"
+              >
+                {{ branchHint.badge }}
+              </span>
+              <span>{{ branchHint.text }}</span>
             </div>
           </section>
 
@@ -234,8 +249,15 @@
 
             <div class="repository-modal__actions">
               <n-button quaternary @click="closeModal">取消</n-button>
-              <n-button secondary @click="handleTestConnection">测试连接</n-button>
-              <n-button type="primary" @click="handleSave">
+              <n-button
+                secondary
+                :loading="connectionTesting"
+                :disabled="!canTestConnection"
+                @click="handleTestConnection"
+              >
+                测试连接
+              </n-button>
+              <n-button type="primary" :disabled="!canSaveRepository" @click="handleSave">
                 {{ isEditMode ? '保存修改' : '保存仓库' }}
               </n-button>
             </div>
@@ -268,7 +290,7 @@
             </div>
             <div class="repository-modal__result-metric">
               <span>最新 Commit</span>
-              <strong class="mono">{{ connectionResult.lastCommitHash }}</strong>
+              <strong class="mono">{{ connectionResult.lastCommitHash || '-' }}</strong>
             </div>
           </div>
         </div>
@@ -296,8 +318,11 @@ const repositoryStore = useRepositoryStore()
 const message = useMessage()
 const modalVisible = ref(false)
 const branchLoading = ref(false)
+const connectionTesting = ref(false)
 const branchFetchError = ref('')
 const lastFetchedBranchUrl = ref('')
+const urlValidationState = ref<'idle' | 'valid' | 'invalid'>('idle')
+const urlValidationMessage = ref('')
 const providerMode = ref<'auto' | 'manual'>('auto')
 const detectedProvider = ref<GitProvider | null>(null)
 const nameSource = ref<'idle' | 'auto' | 'manual'>('idle')
@@ -357,12 +382,79 @@ const totalCommitCountToday = computed(() =>
 )
 const currentProviderLabel = computed(() => providerLabelMap[form.provider] ?? 'GitHub')
 const currentSyncLabel = computed(() => syncLabelMap[form.syncFrequency] ?? '10 分钟')
+const canReloadBranches = computed(
+  () => Boolean(form.url.trim()) && urlValidationState.value === 'valid',
+)
+const canTestConnection = computed(
+  () => Boolean(form.url.trim()) && Boolean(form.branch.trim()) && urlValidationState.value === 'valid',
+)
+const canSaveRepository = computed(
+  () =>
+    Boolean(form.name.trim()) &&
+    Boolean(form.owner.trim()) &&
+    Boolean(form.url.trim()) &&
+    Boolean(form.branch.trim()) &&
+    urlValidationState.value === 'valid',
+)
 const canRestoreAutoName = computed(
   () => nameSource.value === 'manual' && Boolean(lastAutoFilledName.value),
 )
 const canRestoreAutoOwner = computed(
   () => ownerSource.value === 'manual' && Boolean(lastAutoFilledOwner.value),
 )
+const branchHint = computed(() => {
+  if (branchLoading.value) {
+    return {
+      badge: '自动读取中',
+      text: '正在读取仓库分支列表...',
+      tone: 'normal' as const,
+      badgeTone: 'auto' as const,
+    }
+  }
+
+  if (branchFetchError.value) {
+    return {
+      badge: '读取异常',
+      text: branchFetchError.value,
+      tone: 'error' as const,
+      badgeTone: 'manual' as const,
+    }
+  }
+
+  if (branchOptions.value.length > 0) {
+    return {
+      badge: '自动读取',
+      text: `已自动读取 ${branchOptions.value.length} 个分支，请直接选择。`,
+      tone: 'normal' as const,
+      badgeTone: 'auto' as const,
+    }
+  }
+
+  if (!form.url.trim()) {
+    return {
+      badge: '待输入',
+      text: '请先输入仓库地址，系统会自动读取分支列表。',
+      tone: 'normal' as const,
+      badgeTone: 'muted' as const,
+    }
+  }
+
+  if (urlValidationState.value !== 'valid') {
+    return {
+      badge: '待校验',
+      text: '请先输入合法仓库地址并完成地址校验。',
+      tone: 'error' as const,
+      badgeTone: 'manual' as const,
+    }
+  }
+
+  return {
+    badge: '待读取',
+    text: '地址已通过校验，可等待系统自动读取，或点击“重新拉取分支”。',
+    tone: 'normal' as const,
+    badgeTone: 'muted' as const,
+  }
+})
 
 const columns: DataTableColumns<RepositoryItem> = [
   { title: '仓库', key: 'name' },
@@ -437,6 +529,8 @@ function openCreateModal() {
   repositoryStore.clearBranchOptions()
   branchFetchError.value = ''
   lastFetchedBranchUrl.value = ''
+  urlValidationState.value = 'idle'
+  urlValidationMessage.value = ''
   providerMode.value = 'auto'
   detectedProvider.value = null
   nameSource.value = 'idle'
@@ -452,6 +546,8 @@ function editRow(row: RepositoryItem) {
   repositoryStore.clearBranchOptions()
   branchFetchError.value = ''
   lastFetchedBranchUrl.value = row.url
+  urlValidationState.value = 'idle'
+  urlValidationMessage.value = ''
   providerMode.value = 'auto'
   detectedProvider.value = inferProviderFromUrl(row.url)
   nameSource.value = 'idle'
@@ -470,6 +566,8 @@ function handleModalVisibilityChange(value: boolean) {
     repositoryStore.clearBranchOptions()
     branchFetchError.value = ''
     lastFetchedBranchUrl.value = ''
+    urlValidationState.value = 'idle'
+    urlValidationMessage.value = ''
     providerMode.value = 'auto'
     detectedProvider.value = null
     nameSource.value = 'idle'
@@ -484,6 +582,11 @@ function closeModal() {
 }
 
 async function handleSave() {
+  if (!canSaveRepository.value) {
+    message.warning('请先填写仓库名称、合法仓库地址、Owner 和分支')
+    return
+  }
+
   await repositoryStore.saveRepository({ ...form })
   message.success('仓库已保存')
   closeModal()
@@ -500,8 +603,25 @@ async function handleSync(id: string) {
 }
 
 async function handleTestConnection() {
-  await repositoryStore.testConnection({ ...form })
-  message.success('连接测试完成')
+  if (!canTestConnection.value) {
+    message.warning('请先填写合法仓库地址，并选择要测试的分支')
+    return
+  }
+
+  connectionTesting.value = true
+
+  try {
+    const result = await repositoryStore.testConnection({ ...form })
+
+    if (result.success) {
+      message.success('连接测试通过')
+      return
+    }
+
+    message.warning(result.message)
+  } finally {
+    connectionTesting.value = false
+  }
 }
 
 function normalizeRepositoryUrl(url: string) {
@@ -536,6 +656,48 @@ function inferOwnerFromUrl(url: string) {
   const normalized = normalizeRepositoryUrl(url)
   const match = normalized.match(/https?:\/\/[^/]+\/([^/]+)\/([^/?#]+?)(?:\.git)?(?:[/?#].*)?$/i)
   return match?.[1] ?? ''
+}
+
+function validateRepositoryUrl(url: string) {
+  const normalized = normalizeRepositoryUrl(url)
+
+  if (!normalized) {
+    return {
+      state: 'idle' as const,
+      message: '',
+    }
+  }
+
+  let parsedUrl: URL
+
+  try {
+    parsedUrl = new URL(normalized)
+  } catch {
+    return {
+      state: 'invalid' as const,
+      message: '请输入完整仓库地址，例如 https://github.com/org/repo',
+    }
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    return {
+      state: 'invalid' as const,
+      message: '仓库地址仅支持 http 或 https 协议。',
+    }
+  }
+
+  const pathSegments = parsedUrl.pathname.split('/').filter(Boolean)
+  if (pathSegments.length < 2) {
+    return {
+      state: 'invalid' as const,
+      message: '仓库地址至少需要包含 owner 和 repo 两级路径。',
+    }
+  }
+
+  return {
+    state: 'valid' as const,
+    message: '',
+  }
 }
 
 function applyAutoName(nextName: string) {
@@ -574,6 +736,26 @@ function applyAutoOwner(nextOwner: string) {
   lastAutoFilledOwner.value = nextOwner
 }
 
+function clearAutoName() {
+  const currentName = form.name.trim()
+
+  if (nameSource.value === 'auto' || currentName === lastAutoFilledName.value) {
+    form.name = ''
+    nameSource.value = 'idle'
+    lastAutoFilledName.value = ''
+  }
+}
+
+function clearAutoOwner() {
+  const currentOwner = form.owner.trim()
+
+  if (ownerSource.value === 'auto' || currentOwner === lastAutoFilledOwner.value) {
+    form.owner = ''
+    ownerSource.value = 'idle'
+    lastAutoFilledOwner.value = ''
+  }
+}
+
 async function loadBranchesForUrl(options?: {
   silent?: boolean
   preserveCurrentBranch?: boolean
@@ -584,6 +766,12 @@ async function loadBranchesForUrl(options?: {
     repositoryStore.clearBranchOptions()
     branchFetchError.value = ''
     lastFetchedBranchUrl.value = ''
+    return
+  }
+
+  if (urlValidationState.value !== 'valid') {
+    repositoryStore.clearBranchOptions()
+    branchFetchError.value = ''
     return
   }
 
@@ -635,7 +823,7 @@ async function loadBranchesForUrl(options?: {
 }
 
 async function handleReloadBranches() {
-  if (!form.url.trim()) {
+  if (!canReloadBranches.value) {
     return
   }
 
@@ -722,6 +910,7 @@ watch(
     }
 
     repositoryStore.clearBranchOptions()
+    repositoryStore.clearConnectionResult()
     branchFetchError.value = ''
     lastFetchedBranchUrl.value = ''
   },
@@ -741,6 +930,10 @@ watch(
       return
     }
 
+    const validation = validateRepositoryUrl(normalizedNext)
+    urlValidationState.value = validation.state
+    urlValidationMessage.value = validation.message
+
     const inferredProvider = inferProviderFromUrl(normalizedNext)
     detectedProvider.value = inferredProvider
 
@@ -755,12 +948,24 @@ watch(
     applyAutoName(inferredRepositoryName)
 
     repositoryStore.clearBranchOptions()
+    repositoryStore.clearConnectionResult()
     branchFetchError.value = ''
     lastFetchedBranchUrl.value = ''
 
     if (!normalizedNext) {
       detectedProvider.value = null
       form.branch = ''
+      clearAutoName()
+      clearAutoOwner()
+      return
+    }
+
+    if (validation.state !== 'valid') {
+      repositoryStore.clearBranchOptions()
+      branchFetchError.value = ''
+      form.branch = ''
+      clearAutoName()
+      clearAutoOwner()
       return
     }
 
@@ -771,6 +976,17 @@ watch(
     onCleanup(() => {
       window.clearTimeout(timer)
     })
+  },
+)
+
+watch(
+  () => [form.branch, form.token] as const,
+  () => {
+    if (!modalVisible.value) {
+      return
+    }
+
+    repositoryStore.clearConnectionResult()
   },
 )
 
@@ -917,6 +1133,10 @@ onMounted(() => {
   }
 
   &__branch-tip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-top: 4px;
     color: var(--text-3);
     font-size: 13px;
@@ -967,6 +1187,12 @@ onMounted(() => {
     border-color: rgba(255, 207, 112, 0.2);
     background: rgba(255, 207, 112, 0.12);
     color: var(--warning);
+  }
+
+  &__field-badge.is-muted {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-3);
   }
 
   &__field-action {
