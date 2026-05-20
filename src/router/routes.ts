@@ -4,6 +4,7 @@ import {
   FileText,
   LayoutDashboard,
   Settings,
+  Users,
   Webhook,
 } from '@lucide/vue'
 
@@ -66,6 +67,18 @@ export const workspaceChildren: AppRoute[] = [
       requiresAuth: true,
       permission: 'feishu:manage',
       icon: Webhook,
+      showInSidebar: true,
+    },
+  },
+  {
+    path: 'users',
+    name: 'users',
+    component: () => import('@/views/users/index.vue'),
+    meta: {
+      title: '用户管理',
+      requiresAuth: true,
+      permission: 'user:manage',
+      icon: Users,
       showInSidebar: true,
     },
   },

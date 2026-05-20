@@ -1,4 +1,4 @@
-import type { LoginPayload } from '@/types/auth'
+import type { LoginPayload, RegisterPayload } from '@/types/auth'
 import type { DashboardSummary } from '@/types/dashboard'
 import type { FeishuConfig, ModelSettings } from '@/types/settings'
 import type {
@@ -23,6 +23,7 @@ import {
   mockRepositories,
   mockSettings,
   mockUser,
+  mockUsers,
 } from './data'
 
 const LATENCY = 260
@@ -31,6 +32,7 @@ let repositoryCache = [...mockRepositories]
 let reportCache = [...mockReports]
 let settingsCache = { ...mockSettings }
 let feishuCache = { ...mockFeishuConfig }
+let userCache = [...mockUsers]
 
 function wait<T>(data: T): Promise<T> {
   return new Promise((resolve) => {
@@ -48,6 +50,33 @@ export async function login(payload: LoginPayload) {
     token: 'mock-jiazi-token',
     user,
   })
+}
+
+export async function register(payload: RegisterPayload) {
+  const now = new Date().toISOString()
+  const user = {
+    id: crypto.randomUUID(),
+    name: payload.name,
+    email: payload.email,
+    avatar: `https://api.dicebear.com/8.x/bottts/svg?seed=${encodeURIComponent(payload.email)}`,
+    role: 'developer' as const,
+    company: payload.company,
+    gitUsername: payload.gitUsername,
+    createdAt: now,
+    lastLoginAt: now,
+    permissions: mockUser.permissions,
+  }
+
+  userCache = [user, ...userCache]
+
+  return wait({
+    token: 'mock-jiazi-token',
+    user,
+  })
+}
+
+export async function getUsers() {
+  return wait(userCache)
 }
 
 export async function getDashboard(): Promise<DashboardSummary> {
@@ -214,11 +243,13 @@ export async function generateReport(payload: GenerateReportPayload): Promise<Ge
     repoId: payload.repoId,
     repoName: repo?.name ?? 'unknown-repo',
     title: `AI 自动日报 - ${repo?.name ?? 'Unknown Repo'}`,
-    summary: 'AI 已完成 Commit 聚合、Diff 归纳与业务价值提炼，可直接推送到飞书。',
+    summary: 'AI 已根据指定日期和 Git 用户名匹配到的 Commit Message 生成日报，可编辑后推送到飞书。',
     markdown: [
-      '1. 基于今日 Commit 与 Diff，完成关键研发动作聚合，自动归纳为功能开发、Bug 修复和重构优化三类工作。',
-      '2. 识别并合并重复提交，突出日报生成链路、仓库接入与飞书推送等核心业务价值。',
-      '3. 当前报告适合直接同步至团队群或管理层，可按简洁 / 专业 / 管理风格重新生成。',
+      `# ${payload.reportDate} 研发日报`,
+      '',
+      `1. 根据 ${payload.gitUsername} 当日 Commit Message，完成关键研发动作聚合，归纳功能开发、Bug 修复和重构优化等工作。`,
+      '2. 本次生成不分析文件 Diff，仅依据提交文本总结，适合快速形成可编辑日报草稿。',
+      '3. 当前报告可继续人工修订，再同步至飞书机器人或文档。',
       '',
       `Prompt 模板：${preset?.name ?? '默认模板'}`,
       '',
@@ -229,7 +260,9 @@ export async function generateReport(payload: GenerateReportPayload): Promise<Ge
       '- 对接真实后端流水线与飞书 OpenAPI。',
     ].join('\n'),
     style: payload.style,
-    commitIds: payload.commitIds,
+    commitIds: mockCommits
+      .filter((commit) => commit.time.slice(0, 10) === payload.reportDate && commit.author.includes(payload.gitUsername))
+      .map((commit) => commit.id),
     tokenCost: 2670,
     createdAt: '2026-05-16 12:08',
     pushStatus: 'pending',
@@ -239,6 +272,27 @@ export async function generateReport(payload: GenerateReportPayload): Promise<Ge
 
   reportCache = [report, ...reportCache]
   return wait(report)
+}
+
+export async function updateReport(reportId: string, markdown: string) {
+  const target = reportCache.find((item) => item.id === reportId)
+  if (!target) {
+    throw new Error('日报不存在')
+  }
+
+  const updated = {
+    ...target,
+    title: markdown.match(/^#\s+(.+)$/m)?.[1]?.trim() || target.title,
+    summary: markdown
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line && !line.startsWith('#')) || target.summary,
+    markdown,
+    pushStatus: 'pending' as const,
+  }
+
+  reportCache = reportCache.map((item) => (item.id === reportId ? updated : item))
+  return wait(updated)
 }
 
 export async function sendFeishu(payload: FeishuSendPayload) {

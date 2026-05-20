@@ -1,7 +1,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { registerMock, getRequestPayload } from './request'
 import * as mockServer from '@/mock/server'
-import type { LoginPayload } from '@/types/auth'
+import type { LoginPayload, RegisterPayload } from '@/types/auth'
 import type { FeishuConfig, ModelSettings } from '@/types/settings'
 import type { FeishuSendPayload, GenerateReportPayload } from '@/types/report'
 import type { RepositoryForm } from '@/types/repository'
@@ -21,6 +21,10 @@ function queryRepoId(config: InternalAxiosRequestConfig) {
 }
 
 registerMock('POST', '/login', async (config) => ok(await mockServer.login(getRequestPayload<LoginPayload>(config))))
+registerMock('POST', '/auth/register', async (config) =>
+  ok(await mockServer.register(getRequestPayload<RegisterPayload>(config))),
+)
+registerMock('GET', '/users', async () => ok(await mockServer.getUsers()))
 registerMock('GET', '/dashboard/summary', async () => ok(await mockServer.getDashboard()))
 registerMock('GET', '/repository/list', async () => ok(await mockServer.getRepositories()))
 registerMock('POST', '/repository/create', async (config) =>
@@ -42,6 +46,10 @@ registerMock('GET', '/report/prompts', async () => ok(await mockServer.getPrompt
 registerMock('POST', '/report/generate', async (config) =>
   ok(await mockServer.generateReport(getRequestPayload<GenerateReportPayload>(config))),
 )
+registerMock('POST', '/report/update', async (config) => {
+  const payload = getRequestPayload<{ reportId: string; markdown: string }>(config)
+  return ok(await mockServer.updateReport(payload.reportId, payload.markdown))
+})
 registerMock('POST', '/report/send-feishu', async (config) =>
   ok(await mockServer.sendFeishu(getRequestPayload<FeishuSendPayload>(config))),
 )

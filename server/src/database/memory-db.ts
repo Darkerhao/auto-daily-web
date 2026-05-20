@@ -1,7 +1,8 @@
-import { commits, dashboardSummary, feishuConfig, modelSettings, reports, repositories, user } from '../store/mock-data.js'
+import { commits, dashboardSummary, feishuConfig, modelSettings, reports, repositories, user, users } from '../store/mock-data.js'
 
 export interface MemoryDatabase {
   user: typeof user
+  users: typeof users
   repositories: typeof repositories
   reports: typeof reports
   commits: typeof commits
@@ -12,6 +13,7 @@ export interface MemoryDatabase {
 
 const db: MemoryDatabase = {
   user: structuredClone(user),
+  users: structuredClone(users),
   repositories: structuredClone(repositories),
   reports: structuredClone(reports),
   commits: structuredClone(commits),

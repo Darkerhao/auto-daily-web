@@ -6,11 +6,23 @@ CREATE TABLE IF NOT EXISTS app_users (
   avatar TEXT NOT NULL,
   role TEXT NOT NULL,
   company TEXT NOT NULL,
+  git_username TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT '',
+  last_login_at TEXT NOT NULL DEFAULT '',
   permissions JSONB NOT NULL DEFAULT '[]'::jsonb
 );
 
 ALTER TABLE app_users
 ADD COLUMN IF NOT EXISTS permissions JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE app_users
+ADD COLUMN IF NOT EXISTS git_username TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE app_users
+ADD COLUMN IF NOT EXISTS created_at TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE app_users
+ADD COLUMN IF NOT EXISTS last_login_at TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS repositories (
   id TEXT PRIMARY KEY,

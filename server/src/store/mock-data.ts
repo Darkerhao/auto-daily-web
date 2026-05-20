@@ -11,8 +11,18 @@ export const user = {
     'report:generate',
     'feishu:manage',
     'settings:manage',
+    'user:manage',
   ],
 }
+
+export const users = [
+  {
+    ...user,
+    gitUsername: '陈北川',
+    createdAt: '2026-05-16 08:50',
+    lastLoginAt: '2026-05-16 09:00',
+  },
+]
 
 export const repositories = [
   {

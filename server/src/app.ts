@@ -13,6 +13,8 @@ import { createStubWebhookModule } from './modules/system/stub-webhook.module.js
 export function createApp() {
   const app = express()
 
+  app.set('etag', false)
+
   app.use(
     cors({
       origin: process.env.CORS_ORIGIN ?? 'http://localhost:5180',

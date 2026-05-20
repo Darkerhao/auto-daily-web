@@ -41,9 +41,15 @@ export interface GeneratedReport {
 
 export interface GenerateReportPayload {
   repoId: string
-  commitIds: string[]
+  reportDate: string
+  gitUsername: string
   promptTemplate: string
   style: ReportTone
+}
+
+export interface UpdateReportPayload {
+  reportId: string
+  markdown: string
 }
 
 export interface FeishuSendPayload {

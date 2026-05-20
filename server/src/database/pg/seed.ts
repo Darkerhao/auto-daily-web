@@ -1,23 +1,41 @@
 import { getPgPool } from './client.js'
-import { commits, feishuConfig, modelSettings, reports, repositories, user } from '../../store/mock-data.js'
+import { commits, feishuConfig, modelSettings, reports, repositories, users } from '../../store/mock-data.js'
 
 export async function seedDatabase() {
   const pool = getPgPool()
 
-  await pool.query(
-    `
-    INSERT INTO app_users (id, name, email, avatar, role, company, permissions)
-    VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
-    ON CONFLICT (id) DO UPDATE SET
-      name = EXCLUDED.name,
-      email = EXCLUDED.email,
-      avatar = EXCLUDED.avatar,
-      role = EXCLUDED.role,
-      company = EXCLUDED.company,
-      permissions = EXCLUDED.permissions
-    `,
-    [user.id, user.name, user.email, user.avatar, user.role, user.company, JSON.stringify(user.permissions)],
-  )
+  for (const user of users) {
+    await pool.query(
+      `
+      INSERT INTO app_users (
+        id, name, email, avatar, role, company, git_username, created_at, last_login_at, permissions
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        email = EXCLUDED.email,
+        avatar = EXCLUDED.avatar,
+        role = EXCLUDED.role,
+        company = EXCLUDED.company,
+        git_username = EXCLUDED.git_username,
+        created_at = EXCLUDED.created_at,
+        last_login_at = EXCLUDED.last_login_at,
+        permissions = EXCLUDED.permissions
+      `,
+      [
+        user.id,
+        user.name,
+        user.email,
+        user.avatar,
+        user.role,
+        user.company,
+        user.gitUsername,
+        user.createdAt,
+        user.lastLoginAt,
+        JSON.stringify(user.permissions),
+      ],
+    )
+  }
 
   for (const repository of repositories) {
     await pool.query(

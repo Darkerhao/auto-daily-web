@@ -102,6 +102,7 @@ const navDescriptions: Record<string, string> = {
   repositories: '接入与同步',
   reports: '流式生成',
   feishu: '投递链路',
+  users: '成员信息',
   settings: '模型与参数',
 }
 

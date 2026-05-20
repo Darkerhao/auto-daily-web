@@ -14,8 +14,70 @@ export function createPgRepository() {
         avatar: row.avatar,
         role: row.role,
         company: row.company,
+        gitUsername: row.git_username,
+        createdAt: row.created_at,
+        lastLoginAt: row.last_login_at,
         permissions: row.permissions,
       }
+    },
+    async listUsers() {
+      const result = await pool.query('SELECT * FROM app_users ORDER BY created_at DESC')
+      return result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        avatar: row.avatar,
+        role: row.role,
+        company: row.company,
+        gitUsername: row.git_username,
+        createdAt: row.created_at,
+        lastLoginAt: row.last_login_at,
+        permissions: row.permissions,
+      }))
+    },
+    async saveUser(user: {
+      id: string
+      name: string
+      email: string
+      avatar: string
+      role: string
+      company: string
+      gitUsername: string
+      createdAt: string
+      lastLoginAt: string
+      permissions: string[]
+    }) {
+      await pool.query(
+        `
+        INSERT INTO app_users (
+          id, name, email, avatar, role, company, git_username, created_at, last_login_at, permissions
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          email = EXCLUDED.email,
+          avatar = EXCLUDED.avatar,
+          role = EXCLUDED.role,
+          company = EXCLUDED.company,
+          git_username = EXCLUDED.git_username,
+          created_at = EXCLUDED.created_at,
+          last_login_at = EXCLUDED.last_login_at,
+          permissions = EXCLUDED.permissions
+        `,
+        [
+          user.id,
+          user.name,
+          user.email,
+          user.avatar,
+          user.role,
+          user.company,
+          user.gitUsername,
+          user.createdAt,
+          user.lastLoginAt,
+          JSON.stringify(user.permissions),
+        ],
+      )
+      return user
     },
     async getDashboardSummary() {
       const repositories = await this.listRepositories()

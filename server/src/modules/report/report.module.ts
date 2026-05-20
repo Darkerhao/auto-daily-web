@@ -9,17 +9,17 @@ const promptPresets = [
   {
     id: 'professional',
     name: '专业研发',
-    content: '请根据 Git Commit 与 Diff 内容生成专业日报，突出业务价值、技术动作、风险项与明日计划。',
+    content: '请根据指定日期和 Git 用户名筛选出的 Commit Message，生成专业中文研发日报。',
   },
   {
     id: 'concise',
     name: '简洁模式',
-    content: '请用最简洁但专业的语言总结今日研发工作，避免流水账。',
+    content: '请用简洁但专业的语言总结当天研发工作，不要逐条复述 Commit Message。',
   },
   {
     id: 'management',
     name: '管理视角',
-    content: '请站在技术负责人视角生成可同步管理层的日报，突出进展、风险、协作与下一步计划。',
+    content: '请站在技术负责人视角，突出阶段成果、风险项和明日计划，适合同步给管理层。',
   },
 ] as const
 
@@ -28,15 +28,6 @@ type ReportPayload = ReturnType<typeof reportSchema.parse>
 type CommitRecord = Awaited<ReturnType<AppRepository['listCommitsByRepo']>>[number]
 type ReportRecord = Awaited<ReturnType<AppRepository['listReports']>>[number]
 type ModelSettings = Awaited<ReturnType<AppRepository['getModelSettings']>>
-
-interface CommitFileRecord {
-  path: string
-  language: string
-  additions: number
-  deletions: number
-  status?: string
-  patch: string[]
-}
 
 interface ChatCompletionChunk {
   choices?: Array<{
@@ -70,6 +61,13 @@ function writeSseEvent(res: Response, event: string, data: unknown) {
   res.write(`data: ${JSON.stringify(data)}\n\n`)
 }
 
+function setNoStoreHeaders(res: Response) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
+  res.removeHeader('ETag')
+}
+
 function getPromptPreset(style: ReportPayload['style']) {
   return promptPresets.find((item) => item.id === style) ?? promptPresets[0]!
 }
@@ -90,14 +88,10 @@ function resolveApiKey(settings: ModelSettings) {
 
 function resolveBaseUrl(settings: ModelSettings) {
   const configuredBaseUrl = settings.baseUrl?.trim()
-
-  if (configuredBaseUrl) {
-    return configuredBaseUrl.replace(/\/$/, '')
-  }
+  if (configuredBaseUrl) return configuredBaseUrl.replace(/\/$/, '')
 
   if (settings.provider === 'deepseek') return 'https://api.deepseek.com/v1'
   if (settings.provider === 'openai') return 'https://api.openai.com/v1'
-
   return ''
 }
 
@@ -129,50 +123,51 @@ function assertOpenAiCompatibleSettings(settings: ModelSettings) {
   }
 }
 
-function compactPatch(lines: string[], maxLines = 80) {
-  if (lines.length <= maxLines) {
-    return lines.join('\n')
-  }
-
-  const head = lines.slice(0, Math.ceil(maxLines * 0.65))
-  const tail = lines.slice(-Math.floor(maxLines * 0.35))
-  return [...head, `... 已省略 ${lines.length - head.length - tail.length} 行 diff ...`, ...tail].join('\n')
+function normalizeDate(value: string) {
+  return value.trim().slice(0, 10)
 }
 
-function buildCommitContext(commits: CommitRecord[]) {
-  return commits
-    .map((commit, index) => {
-      const files = (commit.files as CommitFileRecord[])
-        .map((file) =>
-          [
-            `文件：${file.path}`,
-            `状态：${file.status ?? 'modified'}，语言：${file.language}，变更：+${file.additions}/-${file.deletions}`,
-            'Diff:',
-            compactPatch(file.patch),
-          ].join('\n'),
-        )
-        .join('\n\n')
+function isSameReportDate(commitTime: string, reportDate: string) {
+  return normalizeDate(commitTime) === reportDate
+}
 
-      return [
+function normalizeAuthor(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function filterCommits(commits: CommitRecord[], payload: ReportPayload) {
+  const reportDate = normalizeDate(payload.reportDate)
+  const gitUsername = normalizeAuthor(payload.gitUsername)
+
+  return commits.filter((commit) => {
+    const dateMatched = isSameReportDate(commit.time, reportDate)
+    const authorMatched = normalizeAuthor(commit.author).includes(gitUsername)
+    return dateMatched && authorMatched
+  })
+}
+
+function buildCommitMessageContext(commits: CommitRecord[]) {
+  return commits
+    .map((commit, index) =>
+      [
         `## Commit ${index + 1}`,
         `Hash: ${commit.shortHash} (${commit.hash})`,
         `作者: ${commit.author}`,
         `时间: ${commit.time}`,
         `分支: ${commit.branch}`,
-        `模块: ${commit.modules.join('、') || '未识别'}`,
         `提交信息: ${commit.message}`,
-        files || '该提交未返回文件级 Diff。',
-      ].join('\n')
-    })
+      ].join('\n'),
+    )
     .join('\n\n---\n\n')
 }
 
 function buildSystemPrompt(styleName: string) {
   return [
-    '你是企业级前端技术负责人，需要基于真实 Git Commit 与 Diff 生成中文研发日报。',
-    '要求：使用专业开发术语，不要流水账；自动合并相同类型修改；输出技术负责人风格。',
+    '你是企业级前端技术负责人，需要只基于 Git Commit Message 生成中文研发日报。',
+    '禁止分析或引用文件 Diff、文件路径、代码行数等信息；如果 Commit Message 信息不足，请写成待确认项。',
+    '要求：使用专业开发术语，不要流水账，自动合并相同类型修改，输出技术负责人风格。',
     '必须覆盖：功能开发、Bug 修复、性能优化、重构优化、风险项、明日计划。',
-    '如果是 Vue 项目，重点识别组件开发、hooks/composables、API 联调、权限逻辑、表单逻辑、状态管理、构建优化、Ant Design Vue、Element Plus、Electron、TypeScript 类型修复。',
+    '如果 Commit Message 涉及 Vue 项目，可重点识别组件开发、hooks/composables、API 联调、权限逻辑、表单逻辑、状态管理、构建优化、Ant Design Vue、Element Plus、Electron、TypeScript 类型修复。',
     `当前日报风格：${styleName}。`,
     '只输出 Markdown 正文，不要输出 JSON，不要解释生成过程。',
   ].join('\n')
@@ -183,12 +178,14 @@ function buildUserPrompt(payload: ReportPayload, repoName: string, commits: Comm
 
   return [
     `仓库：${repoName}`,
+    `日报日期：${payload.reportDate}`,
+    `Git 用户名：${payload.gitUsername}`,
     `用户选择的 Prompt：${payload.promptTemplate || preset.content}`,
     `Commit 数：${commits.length}`,
     '',
-    '请基于以下真实 Commit 与 Diff 生成日报。不要虚构没有出现在 Diff 或 Commit 中的功能；不确定的内容请写成风险或待确认项。',
+    '请只根据以下 Commit Message 生成日报，不要补充没有出现在提交信息中的具体代码改动。',
     '',
-    buildCommitContext(commits),
+    buildCommitMessageContext(commits),
   ].join('\n')
 }
 
@@ -218,31 +215,15 @@ function extractBullets(section: string) {
 }
 
 function buildFallbackRiskItems(commits: CommitRecord[]) {
-  const files = commits.flatMap((commit) => commit.files)
-  const riskItems: string[] = []
-
-  if (files.some((file) => /(^|\/)\.env/i.test(file.path) || /(secret|token|key)/i.test(file.path))) {
-    riskItems.push('涉及配置或凭证相关文件，推送前需复核敏感信息与环境差异。')
+  if (commits.some((commit) => /fix|bug|修复|问题/i.test(commit.message))) {
+    return ['包含缺陷修复类提交，建议同步回归范围与验证结果。']
   }
 
-  if (files.length > 20) {
-    riskItems.push('本次改动文件较多，建议补充回归测试并关注跨模块影响。')
-  }
-
-  if (commits.some((commit) => commit.message.toLowerCase().includes('fix'))) {
-    riskItems.push('包含缺陷修复项，建议同步回归范围与验证结果。')
-  }
-
-  return riskItems.length > 0 ? riskItems : ['模型已基于真实 Diff 生成日报，正式推送前建议复核业务结论。']
+  return ['日报仅基于 Commit Message 生成，正式推送前建议复核业务表述是否完整。']
 }
 
-function buildFallbackTomorrowPlan(commits: CommitRecord[]) {
-  const modules = [...new Set(commits.flatMap((commit) => commit.modules))]
-  if (modules.length === 0) {
-    return ['继续补齐端到端验证，确保日报生成链路稳定可用。']
-  }
-
-  return modules.slice(0, 3).map((module) => `继续推进 ${module} 相关联调、验证与发布前检查。`)
+function buildFallbackTomorrowPlan() {
+  return ['继续补充提交信息规范，确保日报生成结果更准确。']
 }
 
 function buildSummary(markdown: string, repoName: string, commits: CommitRecord[]) {
@@ -256,19 +237,17 @@ function buildSummary(markdown: string, repoName: string, commits: CommitRecord[
     return firstParagraph.slice(0, 220)
   }
 
-  const fileCount = commits.reduce((total, commit) => total + commit.files.length, 0)
-  return `已基于 ${repoName} 的 ${commits.length} 条真实 Commit 与 ${fileCount} 个差异文件生成日报。`
+  return `已基于 ${repoName} 的 ${commits.length} 条 Commit Message 生成日报。`
 }
 
 async function resolveReportContext(repository: AppRepository, payload: ReportPayload) {
   const repo = await repository.getRepositoryById(payload.repoId)
   const repoName = normalizeRepoName(repo?.name ?? payload.repoId)
   const repoCommits = await repository.listCommitsByRepo(payload.repoId)
-  const selectedCommits = repoCommits.filter((commit) => payload.commitIds.includes(commit.id))
-  const commits = selectedCommits.length > 0 ? selectedCommits : repoCommits
+  const commits = filterCommits(repoCommits, payload)
 
   if (commits.length === 0) {
-    throw new Error('当前仓库没有可生成日报的真实 Commit，请先执行“同步并刷新”。')
+    throw new Error(`未找到 ${payload.reportDate} 且作者匹配“${payload.gitUsername}”的 Commit，请先同步仓库或调整筛选条件。`)
   }
 
   return {
@@ -408,7 +387,19 @@ function buildReportRecord(
     createdAt: new Date().toISOString(),
     pushStatus: 'pending',
     riskItems: riskItems.length > 0 ? riskItems : buildFallbackRiskItems(commits),
-    tomorrowPlan: tomorrowPlan.length > 0 ? tomorrowPlan : buildFallbackTomorrowPlan(commits),
+    tomorrowPlan: tomorrowPlan.length > 0 ? tomorrowPlan : buildFallbackTomorrowPlan(),
+  }
+}
+
+function buildUpdatedReportRecord(report: ReportRecord, markdown: string): ReportRecord {
+  return {
+    ...report,
+    title: extractHeading(markdown, report.repoName),
+    summary: buildSummary(markdown, report.repoName, []),
+    markdown,
+    pushStatus: 'pending',
+    riskItems: extractBullets(extractSection(markdown, '风险项')),
+    tomorrowPlan: extractBullets(extractSection(markdown, '明日计划')),
   }
 }
 
@@ -442,11 +433,13 @@ export function createReportModule() {
   })
 
   router.get('/commits/:repoId', async (req, res) => {
+    setNoStoreHeaders(res)
     res.json(ok(await repository.listCommitsByRepo(req.params.repoId)))
   })
 
   router.get('/commits', async (req, res) => {
     const repoId = typeof req.query.repoId === 'string' ? req.query.repoId : 'repo-1'
+    setNoStoreHeaders(res)
     res.json(ok(await repository.listCommitsByRepo(repoId)))
   })
 
@@ -498,18 +491,14 @@ export function createReportModule() {
           )
         : await callChatCompletion(settings, messages)
 
-      if (aborted) {
-        return
-      }
+      if (aborted) return
 
       if (!settings.enableStreaming) {
         writeSseEvent(res, 'delta', { delta: generated.markdown })
       }
 
       const savedReport = await repository.saveReport(buildReportRecord(payload, repoName, commits, generated))
-      if (aborted) {
-        return
-      }
+      if (aborted) return
 
       writeSseEvent(res, 'report', savedReport)
       writeSseEvent(res, 'done', { done: true })
@@ -526,6 +515,32 @@ export function createReportModule() {
         })
         res.end()
       }
+    }
+  })
+
+  router.post('/update', async (req, res, next) => {
+    try {
+      const reportId = typeof req.body?.reportId === 'string' ? req.body.reportId : ''
+      const markdown = typeof req.body?.markdown === 'string' ? req.body.markdown.trim() : ''
+      if (!reportId) {
+        res.status(400).json({ code: 400, message: '日报 ID 不能为空', data: null })
+        return
+      }
+
+      if (!markdown) {
+        res.status(400).json({ code: 400, message: '日报内容不能为空', data: null })
+        return
+      }
+
+      const report = (await repository.listReports()).find((item) => item.id === reportId)
+      if (!report) {
+        res.status(404).json({ code: 404, message: '日报不存在', data: null })
+        return
+      }
+
+      res.json(ok(await repository.saveReport(buildUpdatedReportRecord(report, markdown))))
+    } catch (error) {
+      next(error)
     }
   })
 
@@ -579,6 +594,7 @@ export function createLegacyCommitModule() {
 
   router.get('/list', async (req, res) => {
     const repoId = typeof req.query.repoId === 'string' ? req.query.repoId : 'repo-1'
+    setNoStoreHeaders(res)
     res.json(ok(await repository.listCommitsByRepo(repoId)))
   })
 

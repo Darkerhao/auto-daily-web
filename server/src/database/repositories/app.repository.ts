@@ -9,6 +9,19 @@ function createMemoryRepository() {
     async getUser() {
       return db.user
     },
+    async listUsers() {
+      return db.users
+    },
+    async saveUser(user: (typeof db.users)[number]) {
+      const index = db.users.findIndex((item) => item.id === user.id)
+      if (index >= 0) {
+        db.users[index] = user
+      } else {
+        db.users.unshift(user)
+      }
+      db.user = user
+      return user
+    },
     async getDashboardSummary() {
       return {
         ...db.dashboardSummary,

@@ -27,18 +27,31 @@
 
       <div class="auth-page__form glass-panel">
         <div class="auth-page__form-head">
-          <h2>登录工作台</h2>
-          <span>Demo Access</span>
+          <h2>{{ mode === 'login' ? '登录工作台' : '注册账号' }}</h2>
+          <span>{{ mode === 'login' ? 'Demo Access' : 'User Profile' }}</span>
         </div>
-        <n-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleLogin">
+        <n-tabs v-model:value="mode" type="segment" animated>
+          <n-tab-pane name="login" tab="登录" />
+          <n-tab-pane name="register" tab="注册" />
+        </n-tabs>
+        <n-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleSubmit">
+          <n-form-item v-if="mode === 'register'" path="name" label="姓名">
+            <n-input v-model:value="form.name" placeholder="请输入姓名" />
+          </n-form-item>
           <n-form-item path="email" label="邮箱">
             <n-input v-model:value="form.email" placeholder="name@company.com" />
           </n-form-item>
           <n-form-item path="password" label="密码">
             <n-input v-model:value="form.password" type="password" placeholder="请输入密码" />
           </n-form-item>
-          <n-button block type="primary" size="large" :loading="loading" @click="handleLogin">
-            邮箱登录
+          <n-form-item v-if="mode === 'register'" path="company" label="公司 / 团队">
+            <n-input v-model:value="form.company" placeholder="请输入公司或团队名称" />
+          </n-form-item>
+          <n-form-item v-if="mode === 'register'" path="gitUsername" label="Git 用户名">
+            <n-input v-model:value="form.gitUsername" placeholder="用于按提交作者生成日报" />
+          </n-form-item>
+          <n-button block type="primary" size="large" :loading="loading" @click="handleSubmit">
+            {{ mode === 'login' ? '邮箱登录' : '注册并进入' }}
           </n-button>
           <div class="auth-page__actions">
             <n-button secondary block>GitHub 登录（预留）</n-button>
@@ -66,12 +79,21 @@ const authStore = useAuthStore()
 const formRef = ref<FormInst | null>(null)
 const { loading, withLoading } = useLoading()
 
+const mode = ref<'login' | 'register'>('login')
 const form = reactive({
+  name: '陈北川',
   email: 'demo@jiazi.ai',
   password: '123456',
+  company: '甲子日报 AI',
+  gitUsername: '陈北川',
 })
 
 const rules: FormRules = {
+  name: {
+    required: true,
+    message: '请输入姓名',
+    trigger: ['blur', 'input'],
+  },
   email: {
     required: true,
     message: '请输入邮箱',
@@ -82,13 +104,37 @@ const rules: FormRules = {
     message: '请输入密码',
     trigger: ['blur', 'input'],
   },
+  company: {
+    required: true,
+    message: '请输入公司或团队名称',
+    trigger: ['blur', 'input'],
+  },
+  gitUsername: {
+    required: true,
+    message: '请输入 Git 用户名',
+    trigger: ['blur', 'input'],
+  },
 }
 
-async function handleLogin() {
+async function handleSubmit() {
   await formRef.value?.validate()
   await withLoading(async () => {
-    await authStore.login(form)
-    message.success('登录成功')
+    if (mode.value === 'login') {
+      await authStore.login({
+        email: form.email,
+        password: form.password,
+      })
+      message.success('登录成功')
+    } else {
+      await authStore.register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        company: form.company,
+        gitUsername: form.gitUsername,
+      })
+      message.success('注册成功')
+    }
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/workspace/dashboard'
     router.push(redirect)
   })
@@ -176,6 +222,10 @@ async function handleLogin() {
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
+  }
+
+  :deep(.n-tabs) {
+    margin-bottom: 18px;
   }
 
   &__actions {

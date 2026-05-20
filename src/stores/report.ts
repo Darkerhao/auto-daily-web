@@ -16,6 +16,8 @@ interface ReportPreferences {
   selectedRepoId: string
   selectedPromptId: ReportTone
   selectedReportId: string
+  reportDate: string
+  gitUsername: string
   historyFilters: ReportHistoryFilters
 }
 
@@ -28,6 +30,8 @@ const defaultReportPreferences: ReportPreferences = {
   selectedRepoId: '',
   selectedPromptId: 'professional',
   selectedReportId: '',
+  reportDate: new Date().toISOString().slice(0, 10),
+  gitUsername: '',
   historyFilters: {
     repoId: 'all',
     style: 'all',
@@ -41,14 +45,30 @@ const defaultStreamPanelState: StreamPanelState = {
   latestContent: '',
 }
 
+function normalizeReportPreferences(preferences: Partial<ReportPreferences>): ReportPreferences {
+  return {
+    ...defaultReportPreferences,
+    ...preferences,
+    historyFilters: {
+      ...defaultReportPreferences.historyFilters,
+      ...preferences.historyFilters,
+    },
+  }
+}
+
+function normalizeStreamPanelState(state: Partial<StreamPanelState>): StreamPanelState {
+  return {
+    ...defaultStreamPanelState,
+    ...state,
+  }
+}
+
 export const useReportStore = defineStore('report', () => {
-  const reportPreferences = readStorage<ReportPreferences>(
-    storageKeys.reportPreferences,
-    defaultReportPreferences,
+  const reportPreferences = normalizeReportPreferences(
+    readStorage<Partial<ReportPreferences>>(storageKeys.reportPreferences, defaultReportPreferences),
   )
-  const streamPanelState = readStorage<StreamPanelState>(
-    storageKeys.reportStreamPanel,
-    defaultStreamPanelState,
+  const streamPanelState = normalizeStreamPanelState(
+    readStorage<Partial<StreamPanelState>>(storageKeys.reportStreamPanel, defaultStreamPanelState),
   )
   const commits = ref<CommitItem[]>([])
   const reports = ref<GeneratedReport[]>([])
@@ -60,6 +80,8 @@ export const useReportStore = defineStore('report', () => {
   const selectedRepoId = ref(reportPreferences.selectedRepoId)
   const selectedPromptId = ref<ReportTone>(reportPreferences.selectedPromptId)
   const selectedReportId = ref(reportPreferences.selectedReportId)
+  const reportDate = ref(reportPreferences.reportDate)
+  const gitUsername = ref(reportPreferences.gitUsername)
   const historyFilters = ref<ReportHistoryFilters>(reportPreferences.historyFilters)
 
   function persistPreferences() {
@@ -67,6 +89,8 @@ export const useReportStore = defineStore('report', () => {
       selectedRepoId: selectedRepoId.value,
       selectedPromptId: selectedPromptId.value,
       selectedReportId: selectedReportId.value,
+      reportDate: reportDate.value,
+      gitUsername: gitUsername.value,
       historyFilters: historyFilters.value,
     } satisfies ReportPreferences)
   }
@@ -157,6 +181,14 @@ export const useReportStore = defineStore('report', () => {
     return result
   }
 
+  async function updateReport(reportId: string, markdown: string) {
+    const report = await reportApi.updateReport(reportId, { reportId, markdown })
+    currentReport.value = report
+    selectedReportId.value = report.id
+    reports.value = reports.value.map((item) => (item.id === report.id ? report : item))
+    return report
+  }
+
   function selectReport(report: GeneratedReport) {
     streamContent.value = ''
     currentReport.value = report
@@ -170,7 +202,7 @@ export const useReportStore = defineStore('report', () => {
     }
   }
 
-  watch([selectedRepoId, selectedPromptId, selectedReportId, historyFilters], persistPreferences, {
+  watch([selectedRepoId, selectedPromptId, selectedReportId, reportDate, gitUsername, historyFilters], persistPreferences, {
     deep: true,
   })
   watch([latestStreamReportId, latestStreamContent], persistStreamPanelState, {
@@ -188,12 +220,15 @@ export const useReportStore = defineStore('report', () => {
     selectedRepoId,
     selectedPromptId,
     selectedReportId,
+    reportDate,
+    gitUsername,
     historyFilters,
     fetchCommits,
     fetchReports,
     fetchPrompts,
     generateReport,
     pushFeishu,
+    updateReport,
     selectReport,
     patchHistoryFilters,
   }

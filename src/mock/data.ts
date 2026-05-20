@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/types/auth'
+import type { UserListItem, UserProfile } from '@/types/auth'
 import type { DashboardSummary } from '@/types/dashboard'
 import type { FeishuConfig, ModelSettings } from '@/types/settings'
 import type { CommitItem, GeneratedReport, PromptPreset } from '@/types/report'
@@ -17,8 +17,18 @@ export const mockUser: UserProfile = {
     'report:generate',
     'feishu:manage',
     'settings:manage',
+    'user:manage',
   ],
 }
+
+export const mockUsers: UserListItem[] = [
+  {
+    ...mockUser,
+    gitUsername: '陈北川',
+    createdAt: '2026-05-16 08:50',
+    lastLoginAt: '2026-05-16 09:00',
+  },
+]
 
 export const mockRepositories: RepositoryItem[] = [
   {
